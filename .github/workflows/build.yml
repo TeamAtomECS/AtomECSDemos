@@ -27,4 +27,9 @@ jobs:
     - name: Build 3dmot
       run: cargo build --example 3d_mot --target wasm32-unknown-unknown --release
     - name: Bind outputs
-      run: wasm-bindgen --out-dir target/web target/wasm32-unknown-unknown/release/examples/3d_mot.wasm --target web
+      run: wasm-bindgen --out-dir pages target/wasm32-unknown-unknown/release/examples/3d_mot.wasm --target web
+    - name: Deploy
+      uses: JamesIves/github-pages-deploy-action@v4.3.3
+      with:
+        branch: deploy
+        folder: pages

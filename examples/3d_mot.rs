@@ -179,7 +179,7 @@ fn create_atoms(mut commands: Commands,
     let mut rng = rand::thread_rng();
 
     // Add atoms
-    for _ in 0..2000 {
+    for _ in 0..1000 {
         commands.spawn()
             .insert(Position {
                 pos: Vector3::new(
@@ -201,7 +201,7 @@ fn create_atoms(mut commands: Commands,
             .insert(Atom)
             .insert(NewlyCreated)
             .insert_bundle(PbrBundle {
-                mesh: meshes.add(Mesh::from(shape::Cube { size: 0.05 })),
+                mesh: meshes.add(Mesh::from(shape::Icosphere { radius: 0.05, subdivisions: 0 })),
                 material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
                 transform: Transform::from_xyz(1.5, 0.5, 1.5),
                 ..default()
