@@ -39,7 +39,7 @@ pub struct DopperSimulationConfiguration {
 impl Default for DopperSimulationConfiguration {
     fn default() -> Self {
         DopperSimulationConfiguration {
-            detuning: -3.0,
+            detuning: -8.0,
             number_of_steps: 5000,
         }
     }
@@ -59,24 +59,18 @@ fn main() {
     app.add_startup_system(setup_world);
     app.add_startup_system(create_atoms);
     app.add_startup_system(setup_camera);
-    app.insert_resource(atomecs::bevy_bridge::Scale { 0: 2e3 });
-    app.insert_resource(Timestep { delta: 5.0e-6 });
+    app.insert_resource(atomecs::bevy_bridge::Scale { 0: 1e3 });
+    app.insert_resource(Timestep { delta: 2.0e-5 });
     app.insert_resource(EmissionForceOption::On(EmissionForceConfiguration {
         explicit_threshold: 5,
     }));
     app.insert_resource(ScatteringFluctuationsOption::On);
-
+    app.add_system(atomecs_demos::atoms::update_emissive_color::<Rubidium87_780D2>.after(atomecs::laser_cooling::LaserCoolingSystems::CalculateActualPhotonsScattered));
     app.run();
 }
 
 pub fn setup_world(mut commands: Commands) {
 
-    //Load configuration if one exists.
-    // let read_result = read_to_string("doppler.json");
-    // let configuration: DopperSimulationConfiguration = match read_result {
-    //     Ok(json_str) => serde_json::from_str(&json_str).unwrap(),
-    //     Err(_) => DopperSimulationConfiguration::default(),
-    // };
     let configuration = DopperSimulationConfiguration::default();
 
     // Create magnetic field.
@@ -173,7 +167,7 @@ pub fn setup_world(mut commands: Commands) {
 }
 
 fn create_atoms(mut commands: Commands) {
-    let vel_dist = Normal::new(0.0, 0.22).unwrap();
+    let vel_dist = Normal::new(0.0, 0.42).unwrap();
     let pos_dist = Normal::new(0.0, 1.2e-4).unwrap();
     let mut rng = rand::thread_rng();
 
@@ -183,14 +177,14 @@ fn create_atoms(mut commands: Commands) {
             .insert(Position {
                 pos: Vector3::new(
                     pos_dist.sample(&mut rng),
-                    pos_dist.sample(&mut rng),
+                    pos_dist.sample(&mut rng) - 0.002,
                     pos_dist.sample(&mut rng),
                 ),
             })
             .insert(Velocity {
                 vel: Vector3::new(
                     vel_dist.sample(&mut rng),
-                    vel_dist.sample(&mut rng),
+                    vel_dist.sample(&mut rng) + 3.5,
                     vel_dist.sample(&mut rng),
                 ),
             })
@@ -209,7 +203,7 @@ fn setup_camera(
     // set up the camera
     let mut camera = OrthographicCameraBundle::new_3d();
     camera.orthographic_projection.scale = 3.0;
-    camera.transform = Transform::from_xyz(5.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y);
+    camera.transform = Transform::from_xyz(4.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y);
 
     // camera
     commands.spawn_bundle(camera);
