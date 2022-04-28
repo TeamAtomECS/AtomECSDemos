@@ -20,9 +20,11 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
+    - name: Install wasm toolchain
+      run: rustup target add wasm32-unknown-unknown
     - name: Install wasm-bindgen
       run: cargo install -f wasm-bindgen-cli
     - name: Build 3dmot
       run: cargo build --example 3d_mot --target wasm32-unknown-unknown --release
-    - name: wasm-bindgen
+    - name: Bind outputs
       run: wasm-bindgen --out-dir target/web target/wasm32-unknown-unknown/release/examples/doppler_limit.wasm --target web
