@@ -1,0 +1,30 @@
+[package]
+name = "atomecs_demos"
+description = "Demonstration simulations for AtomECS."
+homepage = "https://github.com/TeamAtomECS/AtomECSDemos"
+repository = "https://github.com/TeamAtomECS/AtomECSDemos"
+version = "0.1.0"
+authors = ["ElliotB256 <7041164+ElliotB256@users.noreply.github.com>"]
+edition = "2018"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+keywords = ["physics", "cold-atoms", "amop", "laser-cooling", "ecs"]
+resolver = "2"
+
+[dependencies]
+bevy = { version = "0.7", default-features = true, features = []}
+atomecs = { git = "https://github.com/TeamAtomECS/AtomECS", branch = "bevy" }
+nalgebra = { version = "0.30.1", features = ["serde-serialize"] }
+rand = "0.8.3"
+rand_distr = "0.4.0"
+
+[profile.release]
+opt-level = 3
+debug = true
+rpath = false
+lto = false
+debug-assertions = false
+codegen-units = 16
+panic = 'unwind'
+incremental = false
+overflow-checks = false

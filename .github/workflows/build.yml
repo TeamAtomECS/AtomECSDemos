@@ -1,0 +1,28 @@
+name: build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: stable
+          profile: minimal
+          override: true
+    - name: Install wasm-bindgen
+      run: cargo install -f wasm-bindgen-cli
+    - name: Build 3dmot
+      run: cargo build --example 3d_mot --target wasm32-unknown-unknown --release
+    - name: wasm-bindgen
+      run: wasm-bindgen --out-dir target/web target/wasm32-unknown-unknown/release/examples/doppler_limit.wasm --target web
