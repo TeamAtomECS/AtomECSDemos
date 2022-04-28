@@ -23,6 +23,7 @@ use atomecs::laser_cooling::photons_scattered::ScatteringFluctuationsOption;
 use atomecs::laser_cooling::{CoolingLight, LaserCoolingPlugin};
 use atomecs::magnetic::quadrupole::QuadrupoleField3D;
 use atomecs::species::{Rubidium87_780D2};
+use atomecs_demos::BevyAtomECSPlugin;
 use nalgebra::Vector3;
 use rand_distr::{Distribution, Normal};
 use bevy::prelude::*;
@@ -51,6 +52,7 @@ fn main() {
     app.add_plugin(atomecs::magnetic::MagneticsPlugin);
     app.add_plugin(LaserPlugin::<{BEAM_NUMBER}>);
     app.add_plugin(LaserCoolingPlugin::<Rubidium87_780D2, {BEAM_NUMBER}>::default());
+    app.add_plugin(BevyAtomECSPlugin);
     app.add_system(atomecs::output::console_output::console_output);
     app.add_plugins(DefaultPlugins);
     app.add_system(atomecs::bevy_bridge::copy_positions);
@@ -170,10 +172,7 @@ pub fn setup_world(mut commands: Commands) {
         ));
 }
 
-fn create_atoms(mut commands: Commands, 
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
+fn create_atoms(mut commands: Commands) {
     let vel_dist = Normal::new(0.0, 0.22).unwrap();
     let pos_dist = Normal::new(0.0, 1.2e-4).unwrap();
     let mut rng = rand::thread_rng();
@@ -200,12 +199,6 @@ fn create_atoms(mut commands: Commands,
             .insert(Rubidium87_780D2)
             .insert(Atom)
             .insert(NewlyCreated)
-            .insert_bundle(PbrBundle {
-                mesh: meshes.add(Mesh::from(shape::Icosphere { radius: 0.05, subdivisions: 0 })),
-                material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
-                transform: Transform::from_xyz(1.5, 0.5, 1.5),
-                ..default()
-            })
             ;
         }
     }
