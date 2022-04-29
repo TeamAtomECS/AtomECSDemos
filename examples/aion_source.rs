@@ -39,7 +39,7 @@ fn main() {
     app.add_system(atomecs::bevy_bridge::copy_positions);
     app.add_startup_system(setup_world);
     app.add_system(add_meshes_to_atoms::<Strontium88_461>);
-    app.add_system(update_emissive_color::<Strontium88_461>);
+    //app.add_system(update_emissive_color::<Strontium88_461>);
     app.add_system(create_atoms);
     app.add_system(control_camera);
     app.add_startup_system(setup_camera);
@@ -243,8 +243,6 @@ fn spawn_cad(
     mut commands: Commands,
     asset_server: Res<AssetServer>
 ) {
-    // Spawn the scene as a child of another entity. This first scene will be translated backward
-    // with its parent
     commands
         .spawn_bundle(TransformBundle::from(Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI / 2.0)).with_scale(Vec3::new(0.6,0.6,0.6))))
         .with_children(|parent| {
