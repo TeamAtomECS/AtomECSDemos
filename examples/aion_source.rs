@@ -14,8 +14,9 @@ use atomecs::magnetic::quadrupole::QuadrupoleField2D;
 use atomecs::shapes::Cuboid;
 use atomecs::sim_region::{SimulationVolume, VolumeType, SimulationRegionPlugin};
 use atomecs::species::{Strontium88_461};
-use atomecs_demos::atoms::{add_meshes_to_atoms, update_emissive_color, EmissiveColorConfig, MaterialColorConfig};
+use atomecs_demos::atoms::{add_meshes_to_atoms, EmissiveColorConfig, MaterialColorConfig};
 use atomecs_demos::camera::{control_camera, DemoCamera};
+use atomecs_demos::lasers::add_meshes_to_lasers;
 use atomecs_demos::{add_atomecs_watermark, BevyAtomECSPlugin};
 use nalgebra::{Vector3, Unit};
 use bevy::prelude::*;
@@ -40,6 +41,7 @@ fn main() {
     app.add_startup_system(setup_world);
     app.add_system(add_meshes_to_atoms::<Strontium88_461>);
     //app.add_system(update_emissive_color::<Strontium88_461>);
+    app.add_system(add_meshes_to_lasers::<Strontium88_461>);
     app.add_system(create_atoms);
     app.add_system(control_camera);
     app.add_startup_system(setup_camera);
@@ -51,7 +53,7 @@ fn main() {
         explicit_threshold: 5,
     }));
     app.insert_resource(EmissiveColorConfig { factor: 8.0 });
-    app.insert_resource(MaterialColorConfig { factor: 0.5 });
+    app.insert_resource(MaterialColorConfig { factor: 1.0 });
     app.insert_resource(ScatteringFluctuationsOption::On);
     app.run();
 }
@@ -68,7 +70,7 @@ pub fn setup_world(mut commands: Commands) {
         .insert(Position::default());
 
     // Push beam along z
-    let push_beam_radius = 11e-3;
+    let push_beam_radius = 4e-3;
     let push_beam_power = 0.020;
     let push_beam_detuning = -103.0;
 

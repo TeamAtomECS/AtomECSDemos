@@ -1,5 +1,6 @@
 pub mod atoms;
 pub mod camera;
+pub mod lasers;
 
 use bevy::prelude::*;
 
