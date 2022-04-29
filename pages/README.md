@@ -6,4 +6,5 @@ This repository holds a number of AtomECS simulations which have been written to
 
 | Simulation        |  Description                         |
 |-------------------|--------------------------------------|
-| [3D MOT](https://teamatomecs.github.io/AtomECSDemos/3d_mot.html) | A simulation of a 3D magneto-optical trap. |
+| [3D MOT](https://teamatomecs.github.io/AtomECSDemos/3d_mot.html) | A 3D magneto-optical trap. |
+| [2D MOT](https://teamatomecs.github.io/AtomECSDemos/2d_mot.html) | A 2D+ magneto-optical source, with two slowing beams and a push beam. |

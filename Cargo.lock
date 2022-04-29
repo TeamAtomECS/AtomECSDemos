@@ -163,7 +163,7 @@ checksum = "30696a84d817107fc028e049980e09d5e140e8da8f1caeb17e8e950658a3cea9"
 [[package]]
 name = "atomecs"
 version = "0.8.1"
-source = "git+https://github.com/TeamAtomECS/AtomECS?branch=bevy#7fd5860e377093f35955830c5adb0c34234f7ddd"
+source = "git+https://github.com/TeamAtomECS/AtomECS?branch=bevy#819979f53edaa07355ae22b8643d4933cd0d206d"
 dependencies = [
  "assert_approx_eq",
  "atomecs-derive",
@@ -1817,9 +1817,9 @@ dependencies = [
 
 [[package]]
 name = "kqueue"
-version = "1.0.5"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97caf428b83f7c86809b7450722cd1f2b1fc7fb23aa7b9dee7e72ed14d048352"
+checksum = "4d6112e8f37b59803ac47a42d14f1f3a59bbf72fc6857ffc5be455e28a691f8e"
 dependencies = [
  "kqueue-sys",
  "libc",
@@ -2969,9 +2969,9 @@ checksum = "8fb1df15f412ee2e9dfc1c504260fa695c1c3f10fe9f4a6ee2d2184d7d6450e2"
 
 [[package]]
 name = "syn"
-version = "1.0.91"
+version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b683b2b825c8eef438b77c36a06dc262294da3d5a5813fac20da149241dcd44d"
+checksum = "7ff7c592601f11445996a06f8ad0c27f094a58857c2f89e97974ab9235b92c52"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -28,6 +28,10 @@ jobs:
       run: cargo build --example 3d_mot --target wasm32-unknown-unknown --release
     - name: Bind outputs
       run: wasm-bindgen --out-dir pages target/wasm32-unknown-unknown/release/examples/3d_mot.wasm --target web
+    - name: Build 2dmot
+      run: cargo build --example 2d_mot --target wasm32-unknown-unknown --release
+    - name: Bind outputs
+      run: wasm-bindgen --out-dir pages target/wasm32-unknown-unknown/release/examples/2d_mot.wasm --target web
     - name: Deploy
       uses: JamesIves/github-pages-deploy-action@v4.3.3
       with:

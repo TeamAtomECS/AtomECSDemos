@@ -49,6 +49,7 @@ fn main() {
 
     let mut app = App::new();
     app.add_plugin(atomecs::integrator::IntegrationPlugin);
+    app.add_plugin(atomecs::initiate::InitiatePlugin);
     app.add_plugin(atomecs::magnetic::MagneticsPlugin);
     app.add_plugin(LaserPlugin::<{BEAM_NUMBER}>);
     app.add_plugin(LaserCoolingPlugin::<Rubidium87_780D2, {BEAM_NUMBER}>::default());
