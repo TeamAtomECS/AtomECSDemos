@@ -65,7 +65,7 @@ fn main() {
         explicit_threshold: 5,
     }));
     app.insert_resource(ScatteringFluctuationsOption::On);
-    app.add_system(atomecs_demos::atoms::update_emissive_color::<Rubidium87_780D2>.after(atomecs::laser_cooling::LaserCoolingSystems::CalculateActualPhotonsScattered));
+    //app.add_system(atomecs_demos::atoms::update_emissive_color::<Rubidium87_780D2>.after(atomecs::laser_cooling::LaserCoolingSystems::CalculateActualPhotonsScattered));
     app.run();
 }
 
