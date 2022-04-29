@@ -23,7 +23,7 @@ use atomecs::laser_cooling::photons_scattered::ScatteringFluctuationsOption;
 use atomecs::laser_cooling::{CoolingLight, LaserCoolingPlugin};
 use atomecs::magnetic::quadrupole::QuadrupoleField3D;
 use atomecs::species::{Rubidium87_780D2};
-use atomecs_demos::BevyAtomECSPlugin;
+use atomecs_demos::{BevyAtomECSPlugin, add_atomecs_watermark};
 use nalgebra::Vector3;
 use rand_distr::{Distribution, Normal};
 use bevy::prelude::*;
@@ -59,6 +59,7 @@ fn main() {
     app.add_startup_system(setup_world);
     app.add_startup_system(create_atoms);
     app.add_startup_system(setup_camera);
+    app.add_startup_system(add_atomecs_watermark);
     app.insert_resource(atomecs::bevy_bridge::Scale { 0: 1e3 });
     app.insert_resource(Timestep { delta: 2.0e-5 });
     app.insert_resource(EmissionForceOption::On(EmissionForceConfiguration {
