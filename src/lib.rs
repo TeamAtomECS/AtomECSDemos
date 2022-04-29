@@ -1,11 +1,13 @@
 pub mod atoms;
+pub mod camera;
 
 use bevy::prelude::*;
 
 pub struct BevyAtomECSPlugin;
 impl Plugin for BevyAtomECSPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(atoms::add_meshes_to_atoms);
+        //app.add_system(atoms::add_meshes_to_atoms);
+        app.init_resource::<atoms::MaterialColorConfig>();
     }
 }
 

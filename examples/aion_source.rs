@@ -14,6 +14,8 @@ use atomecs::magnetic::quadrupole::QuadrupoleField2D;
 use atomecs::shapes::Cuboid;
 use atomecs::sim_region::{SimulationVolume, VolumeType, SimulationRegionPlugin};
 use atomecs::species::{Strontium88_461};
+use atomecs_demos::atoms::{add_meshes_to_atoms, update_emissive_color, EmissiveColorConfig, MaterialColorConfig};
+use atomecs_demos::camera::{control_camera, DemoCamera};
 use atomecs_demos::{add_atomecs_watermark, BevyAtomECSPlugin};
 use nalgebra::{Vector3, Unit};
 use bevy::prelude::*;
@@ -36,7 +38,10 @@ fn main() {
     app.add_plugins(DefaultPlugins);
     app.add_system(atomecs::bevy_bridge::copy_positions);
     app.add_startup_system(setup_world);
+    app.add_system(add_meshes_to_atoms::<Strontium88_461>);
+    app.add_system(update_emissive_color::<Strontium88_461>);
     app.add_system(create_atoms);
+    app.add_system(control_camera);
     app.add_startup_system(setup_camera);
     app.add_startup_system(add_atomecs_watermark);
     app.add_startup_system(spawn_cad);
@@ -45,6 +50,8 @@ fn main() {
     app.insert_resource(EmissionForceOption::On(EmissionForceConfiguration {
         explicit_threshold: 5,
     }));
+    app.insert_resource(EmissiveColorConfig { factor: 8.0 });
+    app.insert_resource(MaterialColorConfig { factor: 0.5 });
     app.insert_resource(ScatteringFluctuationsOption::On);
     app.run();
 }
@@ -200,7 +207,7 @@ fn setup_camera(
     camera.transform = Transform::from_xyz(4.0, 4.0, 3.5).looking_at(Vec3::ZERO, Vec3::Y);
 
     // camera
-    commands.spawn_bundle(camera);
+    commands.spawn_bundle(camera).insert(DemoCamera::default());
 
     const HALF_SIZE: f32 = 10.0;
     commands.spawn_bundle(DirectionalLightBundle {

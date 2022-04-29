@@ -13,6 +13,7 @@ use atomecs::magnetic::quadrupole::QuadrupoleField3D;
 use atomecs::shapes::Cuboid;
 use atomecs::sim_region::{SimulationVolume, VolumeType, SimulationRegionPlugin};
 use atomecs::species::{Strontium88_461};
+use atomecs_demos::atoms::add_meshes_to_atoms;
 use atomecs_demos::{add_atomecs_watermark, BevyAtomECSPlugin};
 use nalgebra::Vector3;
 use bevy::prelude::*;
@@ -34,6 +35,7 @@ fn main() {
     app.add_system(atomecs::output::console_output::console_output);
     app.add_plugins(DefaultPlugins);
     app.add_system(atomecs::bevy_bridge::copy_positions);
+    app.add_system(add_meshes_to_atoms::<Strontium88_461>);
     app.add_startup_system(setup_world);
     app.add_system(create_atoms);
     app.add_startup_system(setup_camera);

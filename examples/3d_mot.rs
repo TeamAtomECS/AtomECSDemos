@@ -23,6 +23,7 @@ use atomecs::laser_cooling::photons_scattered::ScatteringFluctuationsOption;
 use atomecs::laser_cooling::{CoolingLight, LaserCoolingPlugin};
 use atomecs::magnetic::quadrupole::QuadrupoleField3D;
 use atomecs::species::{Rubidium87_780D2};
+use atomecs_demos::atoms::add_meshes_to_atoms;
 use atomecs_demos::{BevyAtomECSPlugin, add_atomecs_watermark};
 use nalgebra::Vector3;
 use rand_distr::{Distribution, Normal};
@@ -54,6 +55,7 @@ fn main() {
     app.add_plugin(LaserPlugin::<{BEAM_NUMBER}>);
     app.add_plugin(LaserCoolingPlugin::<Rubidium87_780D2, {BEAM_NUMBER}>::default());
     app.add_plugin(BevyAtomECSPlugin);
+    app.add_system(add_meshes_to_atoms::<Rubidium87_780D2>);
     app.add_system(atomecs::output::console_output::console_output);
     app.add_plugins(DefaultPlugins);
     app.add_system(atomecs::bevy_bridge::copy_positions);
