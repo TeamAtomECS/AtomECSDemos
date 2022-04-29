@@ -1,21 +1,23 @@
 //! Functionality for rendering atoms.
 
 use bevy::prelude::*;
-use atomecs::{atom::Atom, laser_cooling::{transition::AtomicTransition, photons_scattered::TotalPhotonsScattered}, integrator::Timestep};
+use atomecs::{atom::{Atom, Position}, laser_cooling::{transition::AtomicTransition, photons_scattered::TotalPhotonsScattered}, integrator::Timestep, bevy_bridge::Scale};
 
 /// adds meshes to atoms so they can be rendered.
 pub fn add_meshes_to_atoms(
     mut commands: Commands, 
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    query: Query<Entity, (With<Atom>, Without<Handle<Mesh>>)>
+    scale: Res<Scale>,
+    query: Query<(Entity, &Position), (With<Atom>, Without<Handle<Mesh>>)>
 ) {
 
-    for entity in query.iter() {
+    for (entity, pos) in query.iter() {
+        let p = pos.pos * scale.0;
         commands.entity(entity).insert_bundle(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Icosphere { radius: 0.05, subdivisions: 0 })),
             material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
-            transform: Transform::from_xyz(1.5, 0.5, 1.5),
+            transform: Transform::from_xyz(p[0] as f32, p[1] as f32, p[2] as f32),
             ..default()
         });
     }
