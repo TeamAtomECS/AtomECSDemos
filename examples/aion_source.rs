@@ -1,3 +1,4 @@
+
 //! A 2D+ mot configuration, loaded directly from oven.
 
 use atomecs::atom::{Atom, Force, Mass};
@@ -9,12 +10,12 @@ use atomecs::laser::gaussian::GaussianBeam;
 use atomecs::laser_cooling::force::{EmissionForceOption, EmissionForceConfiguration};
 use atomecs::laser_cooling::photons_scattered::ScatteringFluctuationsOption;
 use atomecs::laser_cooling::{CoolingLight, LaserCoolingPlugin};
-use atomecs::magnetic::quadrupole::QuadrupoleField3D;
+use atomecs::magnetic::quadrupole::QuadrupoleField2D;
 use atomecs::shapes::Cuboid;
 use atomecs::sim_region::{SimulationVolume, VolumeType, SimulationRegionPlugin};
 use atomecs::species::{Strontium88_461};
 use atomecs_demos::{add_atomecs_watermark, BevyAtomECSPlugin};
-use nalgebra::Vector3;
+use nalgebra::{Vector3, Unit};
 use bevy::prelude::*;
 use rand_distr::{Normal, Distribution};
 
@@ -38,6 +39,7 @@ fn main() {
     app.add_system(create_atoms);
     app.add_startup_system(setup_camera);
     app.add_startup_system(add_atomecs_watermark);
+    app.add_startup_system(spawn_cad);
     app.insert_resource(atomecs::bevy_bridge::Scale { 0: 7e1 });
     app.insert_resource(Timestep { delta: 2.0e-5 });
     app.insert_resource(EmissionForceOption::On(EmissionForceConfiguration {
@@ -51,7 +53,11 @@ pub fn setup_world(mut commands: Commands) {
 
     // Create magnetic field.
     commands.spawn()
-        .insert(QuadrupoleField3D::gauss_per_cm(27.0, Vector3::z()))
+        .insert(QuadrupoleField2D::gauss_per_cm(
+            27.0, 
+            Vector3::x_axis(), 
+            Unit::new_normalize(Vector3::new(0.0, 1.0, 1.0))
+        ))
         .insert(Position::default());
 
     // Push beam along z
@@ -64,7 +70,7 @@ pub fn setup_world(mut commands: Commands) {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: push_beam_radius,
             power: push_beam_power,
-            direction: Vector3::z(),
+            direction: Vector3::x(),
             rayleigh_range: f64::INFINITY,
             ellipticity: 0.0,
         })
@@ -82,7 +88,7 @@ pub fn setup_world(mut commands: Commands) {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: radius,
             power,
-            direction: Vector3::new(1.0, 1.0, 0.0).normalize(),
+            direction: Vector3::new(0.0, 1.0, 1.0).normalize(),
             rayleigh_range: f64::INFINITY,
             ellipticity: 0.0,
         })
@@ -95,7 +101,7 @@ pub fn setup_world(mut commands: Commands) {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: radius,
             power,
-            direction: Vector3::new(1.0, -1.0, 0.0).normalize(),
+            direction: Vector3::new(0.0, -1.0, -1.0).normalize(),
             rayleigh_range: f64::INFINITY,
             ellipticity: 0.0,
         })
@@ -108,26 +114,26 @@ pub fn setup_world(mut commands: Commands) {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: radius,
             power,
-            direction: Vector3::new(-1.0, 1.0, 0.0).normalize(),
+            direction: Vector3::new(0.0, 1.0, -1.0).normalize(),
             rayleigh_range: f64::INFINITY,
             ellipticity: 0.0,
         })
         .insert(CoolingLight::for_transition::<Strontium88_461>(
             detuning,
-            1,
+            -1,
         ));
     commands.spawn()
         .insert(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: radius,
             power,
-            direction: Vector3::new(-1.0, -1.0, 0.0).normalize(),
+            direction: Vector3::new(0.0, -1.0, 1.0).normalize(),
             rayleigh_range: f64::INFINITY,
             ellipticity: 0.0,
         })
         .insert(CoolingLight::for_transition::<Strontium88_461>(
             detuning,
-            1,
+            -1,
         ));
 
     // Use a simulation bound so that atoms that escape the capture region are deleted from the simulation.
@@ -136,7 +142,7 @@ pub fn setup_world(mut commands: Commands) {
             pos: Vector3::new(0.0, 0.0, 0.0),
         })
         .insert(Cuboid {
-            half_width: Vector3::new(0.1, 0.01, 0.01),
+            half_width: Vector3::new(0.02, 0.1, 0.02),
         })
         .insert(SimulationVolume {
             volume_type: VolumeType::Inclusive,
@@ -145,10 +151,10 @@ pub fn setup_world(mut commands: Commands) {
     // The simulation bound also now includes a small pipe to capture the 2D MOT output properly.
     commands.spawn()
         .insert(Position {
-            pos: Vector3::new(0.0, 0.0, 0.1),
+            pos: Vector3::new(0.05, 0.0, 0.0),
         })
         .insert(Cuboid {
-            half_width: Vector3::new(0.01, 0.01, 0.1),
+            half_width: Vector3::new(0.05, 0.01, 0.01),
         })
         .insert(SimulationVolume {
             volume_type: VolumeType::Inclusive,
@@ -156,7 +162,7 @@ pub fn setup_world(mut commands: Commands) {
 }
 
 fn create_atoms(mut commands: Commands) {
-    let vel_dist = Normal::new(0.0, 2.0).unwrap();
+    let dist = Normal::new(0.0, 1.0).unwrap();
     let mut rng = rand::thread_rng();
 
     // Add atoms
@@ -164,14 +170,14 @@ fn create_atoms(mut commands: Commands) {
         commands.spawn()
             .insert(Position {
                 pos: Vector3::new(
-                    -0.08, 0.0, 0.0
+                    0.001*dist.sample(&mut rng), -0.08, 0.001*dist.sample(&mut rng)
                 ),
             })
             .insert(Velocity {
                 vel: Vector3::new(
-                    vel_dist.sample(&mut rng) * 5.0 + 50.0,
-                    vel_dist.sample(&mut rng) * 2.0,
-                    vel_dist.sample(&mut rng) * 2.0,
+                    dist.sample(&mut rng) * 10.0,
+                    dist.sample(&mut rng) * 30.0 + 95.0,
+                    dist.sample(&mut rng) * 10.0,
                 ),
             })
             .insert(Force::default())
@@ -189,8 +195,9 @@ fn setup_camera(
 ) {
     // set up the camera
     let mut camera = OrthographicCameraBundle::new_3d();
-    camera.orthographic_projection.scale = 3.0;
-    camera.transform = Transform::from_xyz(4.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y);
+    camera.orthographic_projection.scale = 10.0;
+    camera.orthographic_projection.near = -10.0;
+    camera.transform = Transform::from_xyz(4.0, 4.0, 3.5).looking_at(Vec3::ZERO, Vec3::Y);
 
     // camera
     commands.spawn_bundle(camera);
@@ -205,8 +212,8 @@ fn setup_camera(
                 right: HALF_SIZE,
                 bottom: -HALF_SIZE,
                 top: HALF_SIZE,
-                near: -10.0 * HALF_SIZE,
-                far: 10.0 * HALF_SIZE,
+                near: -20.0 * HALF_SIZE,
+                far: 20.0 * HALF_SIZE,
                 ..default()
             },
             shadows_enabled: true,
@@ -214,9 +221,26 @@ fn setup_camera(
         },
         transform: Transform {
             translation: Vec3::new(0.0, 2.0, 0.0),
-            rotation: Quat::from_rotation_x(-2.0),
+            rotation: Quat::from_rotation_y(2.2) * Quat::from_rotation_x(-1.2),
             ..default()
         },
         ..default()
     });
+}
+
+// Component that will be used to tag entities in the scene
+#[derive(Component)]
+struct EntityInMyScene;
+
+fn spawn_cad(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>
+) {
+    // Spawn the scene as a child of another entity. This first scene will be translated backward
+    // with its parent
+    commands
+        .spawn_bundle(TransformBundle::from(Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI / 2.0)).with_scale(Vec3::new(0.6,0.6,0.6))))
+        .with_children(|parent| {
+            parent.spawn_scene(asset_server.load("models/aion_source.gltf#Scene0"));
+        });
 }

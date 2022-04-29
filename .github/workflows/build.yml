@@ -32,6 +32,12 @@ jobs:
       run: cargo build --example 2d_mot --target wasm32-unknown-unknown --release
     - name: Bind outputs
       run: wasm-bindgen --out-dir pages target/wasm32-unknown-unknown/release/examples/2d_mot.wasm --target web
+    - name: Build AION source
+      run: cargo build --example aion_source --target wasm32-unknown-unknown --release
+    - name: Bind outputs
+      run: wasm-bindgen --out-dir pages target/wasm32-unknown-unknown/release/examples/aion_source.wasm --target web
+    - name: Copy assets directory
+      run: cp assets pages -R
     - name: Deploy
       uses: JamesIves/github-pages-deploy-action@v4.3.3
       with:
