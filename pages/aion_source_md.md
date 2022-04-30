@@ -1,9 +1,11 @@
 # AION Source
 
-<script type="module">
-  import init from './aion_source.js'
-  init()
-</script>
+<div style="display: none;">
+  <script type="module">
+    import init from './aion_source.js'
+    init()
+  </script>
+</div>
 
 This simulation shows a simulation of the 2D Magneto-Optical trap (MOT) used for the AION project.
 At the bottom, an oven supplies a stream of hot strontium atoms, which move upwards into the vacuum chamber.
