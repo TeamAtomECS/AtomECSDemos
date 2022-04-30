@@ -30,33 +30,8 @@ pub fn add_meshes_to_lasers<T: AtomicTransition>(
             mesh: meshes.add(Mesh::from(shape::Capsule { radius: (beam.e_radius * scale.0) as f32, depth: 40.0, ..Default::default() })),
             material: materials.add(mat),
             transform: Transform::from_xyz(pos[0] as f32, pos[1] as f32, pos[2] as f32).with_rotation(rotation),
-            // looking_at(
-            //     Vec3::new(
-            //         (scale.0 * pos[0] + scale.0 * beam.direction[0] ) as f32,
-            //         (scale.0 * pos[1] + scale.0 * beam.direction[1] ) as f32,
-            //         (scale.0 * pos[2] + scale.0 * beam.direction[2] ) as f32
-            //     ), 
-            //     Vec3::Y),
             ..default()
         })
         .insert(NotShadowCaster);
     }
 }
-
-// ) {
-//     let mut color = get_color::<T>() * color_factor.factor;
-//     color.set_a(0.1);
-//     for (entity, beam) in query.iter() {
-//         let pos = beam.intersection * scale.0;
-//         let mut mat: StandardMaterial = color.into();
-//         //.with_translation(Vec3::new(pos[0] as f32, pos[1] as f32, pos[2] as f32)
-        
-//         mat.alpha_mode = AlphaMode::Blend;
-//         commands.entity(entity).insert_bundle(PbrBundle {
-//             mesh: meshes.add(Mesh::from(shape::Capsule { radius: (beam.e_radius * scale.0) as f32, depth: 40.0, ..Default::default() })),
-//             material: materials.add(mat),
-//             transform: Transform::default().looking_at(Vec3::new(pos[0] as f32, pos[1] as f32, pos[2] as f32), Vec3::Y),
-//             ..default()
-//         });
-//     }
-// }
