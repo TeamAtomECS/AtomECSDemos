@@ -235,6 +235,8 @@ fn setup_camera(
         },
         ..default()
     });
+
+    commands.insert_resource(AmbientLight { brightness: 0.1, ..default() });
 }
 
 // Component that will be used to tag entities in the scene

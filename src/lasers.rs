@@ -15,11 +15,12 @@ pub fn add_meshes_to_lasers<T: AtomicTransition>(
     query: Query<(Entity, &GaussianBeam), Without<Handle<Mesh>>>
 ) {
     let mut color = get_color::<T>() * color_factor.factor;
-    color.set_a(0.03);
+    color.set_a(0.05);
     for (entity, beam) in query.iter() {
         let pos = beam.intersection * scale.0;
         let mut mat: StandardMaterial = color.into();
         mat.alpha_mode = AlphaMode::Blend;
+        mat.unlit = true;
         let rotation = Transform::default().looking_at(Vec3::new(
             (beam.direction[0] ) as f32,
             (beam.direction[1] ) as f32,
