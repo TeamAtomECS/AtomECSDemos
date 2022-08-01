@@ -21,12 +21,13 @@ pub fn add_meshes_to_lasers<T: AtomicTransition>(
         let mut mat: StandardMaterial = color.into();
         mat.alpha_mode = AlphaMode::Blend;
         mat.unlit = true;
-        let rotation = Transform::default().looking_at(Vec3::new(
+        let dir = Vec3::new(
             (beam.direction[0] ) as f32,
             (beam.direction[1] ) as f32,
             (beam.direction[2] ) as f32
-        ), 
-        Vec3::Y).rotation * Quat::from_rotation_x(std::f32::consts::PI / 2.0);
+        );
+        let up = if Vec3::Y.dot(dir).abs() > 0.9 { Vec3::X } else { Vec3::Y.clone() };
+        let rotation = Transform::default().looking_at(dir, up).rotation * Quat::from_rotation_x(std::f32::consts::PI / 2.0);
         commands.entity(entity).insert_bundle(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Capsule { radius: (beam.e_radius * scale.0) as f32, depth: 40.0, ..Default::default() })),
             material: materials.add(mat),
