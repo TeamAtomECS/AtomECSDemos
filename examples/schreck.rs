@@ -10,7 +10,7 @@ use atomecs::laser::gaussian::GaussianBeam;
 use atomecs::laser_cooling::force::{EmissionForceOption, EmissionForceConfiguration};
 use atomecs::laser_cooling::photons_scattered::ScatteringFluctuationsOption;
 use atomecs::laser_cooling::{CoolingLight, LaserCoolingPlugin};
-use atomecs::magnetic::quadrupole::QuadrupoleField2D;
+use atomecs::magnetic::grid::PrecalculatedMagneticFieldGrid;
 use atomecs::shapes::Cuboid;
 use atomecs::sim_region::{SimulationVolume, VolumeType, SimulationRegionPlugin};
 use atomecs::species::{Strontium88_461};
@@ -18,9 +18,10 @@ use atomecs_demos::atoms::{add_meshes_to_atoms, EmissiveColorConfig, MaterialCol
 use atomecs_demos::camera::{control_camera, DemoCamera};
 use atomecs_demos::lasers::add_meshes_to_lasers;
 use atomecs_demos::{add_atomecs_watermark, BevyAtomECSPlugin};
-use nalgebra::{Vector3, Unit};
+use nalgebra::{Vector3};
 use bevy::prelude::*;
 use rand_distr::{Normal, Distribution};
+extern crate serde;
 
 
 const BEAM_NUMBER : usize = 22;
@@ -58,7 +59,7 @@ fn main() {
     app.run();
 }
 
-pub fn setup_world(mut commands: Commands) {
+pub fn setup_world(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Create magnetic field.
     // commands.spawn()
@@ -68,6 +69,10 @@ pub fn setup_world(mut commands: Commands) {
     //         Unit::new_normalize(Vector3::new(0.0, 1.0, 1.0))
     //     ))
     //     .insert(Position::default());
+    let grid: PrecalculatedMagneticFieldGrid = serde_json::from_str(SLOWER_FIELD)
+            .expect("Could not load magnetic field grid from json file.");
+    commands.spawn().insert(grid);
+
 
     // Zeeman slowing beam along x
     let zeeman_slower_e2_diameter = 25e-3;
@@ -78,7 +83,7 @@ pub fn setup_world(mut commands: Commands) {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: zeeman_slower_e2_diameter / 2.0 / 2.0_f64.sqrt(),
             power: zeeman_slower_power,
-            direction: Vector3::x(),
+            direction: -Vector3::x(),
             rayleigh_range: f64::INFINITY,
             ellipticity: 0.0,
         })
@@ -235,7 +240,7 @@ fn create_atoms(mut commands: Commands) {
             })
             .insert(Velocity {
                 vel: Vector3::new(
-                    dist.sample(&mut rng) * 80.0 + 300.0,
+                    dist.sample(&mut rng) * 80.0 + 350.0,
                     dist.sample(&mut rng) * 5.0,
                     dist.sample(&mut rng) * 5.0,
                 ),
@@ -305,3 +310,6 @@ fn spawn_cad(
     //         parent.spawn_scene(asset_server.load("models/aion_source.gltf#Scene0"));
     //     });
 }
+
+//yeah its messy, but so is loading raw json via bevy asset lib right now.
+static SLOWER_FIELD: &str = "{\"extent_spatial\":[1.4,0.1,0.1],\"extent_cells\":[100,1,1],\"position\":[-0.6,0,0],\"grid\":[[0,0,0],[-0.00010356086113661874,0,0],[-0.00012131415161718194,0,0],[-5.3259871441689581E-5,0,0],[8.8390279697289322E-5,0,0],[0.00028248096720701575,0,0],[0.00059618220775245544,0,0],[0.0010902402249203598,0,0],[0.0013788955775487766,0,0],[0.0018677685950413221,0,0],[0.003386332460406539,0,0],[0.0066049382716049368,0,0],[0.011197929710326406,0,0],[0.016485182402537775,0,0],[0.021948657063441273,0,0],[0.028529927372902587,0,0],[0.035079994929398055,0,0],[0.03978910006090907,0,0],[0.041496619083395941,0,0],[0.041206110693714007,0,0],[0.040275945868232368,0,0],[0.039806049475470971,0,0],[0.0392482853223594,0,0],[0.038576111075039762,0,0],[0.037939839162979654,0,0],[0.037388889404193971,0,0],[0.036840539874822095,0,0],[0.036219383921863253,0,0],[0.0354419761331301,0,0],[0.034516414012587877,0,0],[0.033588251662631838,0,0],[0.03280424590770474,0,0],[0.0321792344421668,0,0],[0.031629629629629633,0,0],[0.031080024817092468,0,0],[0.030494949494949495,0,0],[0.029909090909090909,0,0],[0.029323232323232327,0,0],[0.028737373737373739,0,0],[0.028151515151515153,0,0],[0.027565656565656568,0,0],[0.026979848479695433,0,0],[0.026425939839162978,0,0],[0.025879831886871985,0,0],[0.025266117969821675,0,0],[0.024515401953418486,0,0],[0.023641246667264425,0,0],[0.022717687022247784,0,0],[0.02181818181818182,0,0],[0.020939393939393938,0,0],[0.020060606060606063,0,0],[0.019181818181818178,0,0],[0.018303030303030304,0,0],[0.017424242424242422,0,0],[0.016545454545454547,0,0],[0.015666666666666662,0,0],[0.014787878787878789,0,0],[0.013909090909090916,0,0],[0.013030303030303034,0,0],[0.012208883035023233,0,0],[0.011413362272866405,0,0],[0.010493030498846236,0,0],[0.0093000425641992825,0,0],[0.0078343350864012087,0,0],[0.0062750193497056062,0,0],[0.0048057475066963975,0,0],[0.0033148148148148156,0,0],[0.0018667859082612719,0,0],[0.00072558407253846236,0,0],[0.00015717783899602084,0,0],[9.4712557675520967E-5,0,0],[0.00013235610878708495,0,0],[-8.039068369646871E-5,0,0],[-0.00011370051911833379,0,0],[-0.00041223375474982267,0,0],[-0.0017677602470990736,0,0],[-0.0047691381728724976,0,0],[-0.0089821673525377153,0,0],[-0.013652836909035225,0,0],[-0.018536119278696511,0,0],[-0.025158216178724331,0,0],[-0.030755822689707009,0,0],[-0.031856213394015648,0,0],[-0.025674242681894964,0,0],[-0.015363107660628206,0,0],[-0.0060504607342684695,0,0],[-0.0016689288559505863,0,0],[-0.00027436903469961536,0,0],[-0.00015912208504801175,0,0],[0.00012212318058660361,0,0],[0.00029451540195341865,0,0],[0.00015488009366185232,0,0],[4.8438677150042879E-6,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]}";

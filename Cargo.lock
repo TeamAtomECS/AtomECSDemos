@@ -199,6 +199,8 @@ dependencies = [
  "nalgebra",
  "rand",
  "rand_distr",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
