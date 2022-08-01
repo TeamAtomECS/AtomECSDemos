@@ -47,52 +47,52 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 199195,
+            "count" : 30749,
             "max" : [
-                175.3328094482422,
+                175.3497314453125,
                 9.670336723327637,
-                0.13579930365085602
+                0.12225787341594696
             ],
             "min" : [
-                -28.412689208984375,
-                -0.8778111934661865,
-                -17.102754592895508
+                -28.42807388305664,
+                -0.8973965644836426,
+                -17.10272979736328
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 199195,
+            "count" : 30749,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
-            "componentType" : 5125,
-            "count" : 206754,
+            "componentType" : 5123,
+            "count" : 31326,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 2390340,
+            "byteLength" : 368988,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 2390340,
-            "byteOffset" : 2390340
+            "byteLength" : 368988,
+            "byteOffset" : 368988
         },
         {
             "buffer" : 0,
-            "byteLength" : 827016,
-            "byteOffset" : 4780680
+            "byteLength" : 62652,
+            "byteOffset" : 737976
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 5607696,
+            "byteLength" : 800628,
             "uri" : "schreck.bin"
         }
     ]
