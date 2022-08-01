@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 use atomecs::{atom::{Atom, Position}, laser_cooling::{transition::AtomicTransition, photons_scattered::TotalPhotonsScattered}, integrator::Timestep, bevy_bridge::Scale};
+use nalgebra::clamp;
 
 /// adds meshes to atoms so they can be rendered.
 pub fn add_meshes_to_atoms<T: AtomicTransition>(
@@ -68,7 +69,8 @@ where T : Default + Copy + Component
         match materials.get_mut(material) {
             None => {}
             Some(material_instance) => {
-                material_instance.emissive = material_instance.base_color * (config.factor * total_scattered.total as f32 / expected_max);
+                let emissive_strength  = clamp(config.factor * total_scattered.total as f32 / expected_max, 0.0, 1.0);
+                material_instance.emissive = material_instance.base_color * emissive_strength;
             }
         }
     }
