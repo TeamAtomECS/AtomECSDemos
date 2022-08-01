@@ -24,6 +24,8 @@ jobs:
       run: rustup target add wasm32-unknown-unknown
     - name: Install wasm-bindgen
       run: cargo install -f wasm-bindgen-cli
+    - name: Update wasm-bindgen dependency
+      run: cargo update -p wasm-bindgen
     - name: Build 3dmot
       run: cargo build --example 3d_mot --target wasm32-unknown-unknown --release
     - name: Bind outputs
