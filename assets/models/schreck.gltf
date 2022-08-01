@@ -1,0 +1,99 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v1.8.19",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "SrPAL",
+            "rotation" : [
+                0.7071068286895752,
+                0,
+                0,
+                0.7071068286895752
+            ],
+            "translation" : [
+                -165.34963989257812,
+                -8.437861442565918,
+                -9.735995292663574
+            ]
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "SrPAL",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1
+                    },
+                    "indices" : 2
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 199195,
+            "max" : [
+                175.3328094482422,
+                9.670336723327637,
+                0.13579930365085602
+            ],
+            "min" : [
+                -28.412689208984375,
+                -0.8778111934661865,
+                -17.102754592895508
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 199195,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5125,
+            "count" : 206754,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 2390340,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2390340,
+            "byteOffset" : 2390340
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 827016,
+            "byteOffset" : 4780680
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 5607696,
+            "uri" : "schreck.bin"
+        }
+    ]
+}
