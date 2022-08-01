@@ -42,6 +42,10 @@ jobs:
       run: cargo build --example top_trap --target wasm32-unknown-unknown --release
     - name: Bind outputs
       run: wasm-bindgen --out-dir pages target/wasm32-unknown-unknown/release/examples/top_trap.wasm --target web
+    - name: Build Schreck PAL
+      run: cargo build --example schreck --target wasm32-unknown-unknown --release
+    - name: Bind outputs
+      run: wasm-bindgen --out-dir pages target/wasm32-unknown-unknown/release/examples/schreck.wasm --target web
     - name: Copy assets directory
       run: cp assets pages -R
     - name: Deploy
