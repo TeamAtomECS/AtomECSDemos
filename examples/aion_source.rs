@@ -40,7 +40,7 @@ fn main() {
     app.add_system(atomecs::bevy_bridge::copy_positions);
     app.add_startup_system(setup_world);
     app.add_system(add_meshes_to_atoms::<Strontium88_461>);
-    //app.add_system(update_emissive_color::<Strontium88_461>);
+    //app.add_system(atomecs_demos::atoms::update_emissive_color::<Strontium88_461>);
     app.add_system(add_meshes_to_lasers::<Strontium88_461>);
     app.add_system(create_atoms);
     app.add_system(control_camera);

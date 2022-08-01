@@ -12,10 +12,13 @@ use atomecs::integrator::Timestep;
 use atomecs::magnetic::force::{MagneticDipole};
 use atomecs::magnetic::quadrupole::QuadrupoleField3D;
 use atomecs::magnetic::top::UniformFieldRotator;
-//use atomecs::simulation::SimulationBuilder;
+use atomecs_demos::atoms::add_meshes_to_atoms;
+use atomecs_demos::camera::{control_camera, DemoCamera};
+use atomecs_demos::{add_atomecs_watermark, BevyAtomECSPlugin};
 use nalgebra::Vector3;
 use rand_distr::{Distribution, Normal};
 use bevy::prelude::*;
+use atomecs::species::{Rubidium87_780D2};
 
 fn main() {
     let mut app = App::new();
@@ -26,6 +29,10 @@ fn main() {
     app.add_system(atomecs::output::console_output::console_output);
     app.add_plugins(DefaultPlugins);
     app.add_system(atomecs::bevy_bridge::copy_positions);
+    app.add_system(control_camera);
+    app.add_system(add_meshes_to_atoms::<Rubidium87_780D2>);
+    app.add_startup_system(add_atomecs_watermark);
+    app.add_plugin(BevyAtomECSPlugin);
     app.add_startup_system(setup);
     app.insert_resource(atomecs::bevy_bridge::Scale { 0: 1e4 });
     app.add_startup_system(setup_atoms);
@@ -51,9 +58,7 @@ fn main() {
     app.run();
 }
 
-fn setup_atoms(mut commands: Commands, 
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+fn setup_atoms(mut commands: Commands
 ) {
     let p_dist = Normal::new(0.0, 50e-6).unwrap();
     let v_dist = Normal::new(0.0, 0.004).unwrap(); // ~100nK
@@ -80,20 +85,19 @@ fn setup_atoms(mut commands: Commands,
             .insert(NewlyCreated)
             .insert(MagneticDipole { mFgF: 0.5 })
             .insert(Mass { value: 87.0 })
-            .insert_bundle(PbrBundle {
-                mesh: meshes.add(Mesh::from(shape::Cube { size: 0.05 })),
-                material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
-                transform: Transform::from_xyz(1.5, 0.5, 1.5),
-                ..default()
-            })
+            // .insert_bundle(PbrBundle {
+            //     mesh: meshes.add(Mesh::from(shape::Cube { size: 0.05 })),
+            //     material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
+            //     transform: Transform::from_xyz(1.5, 0.5, 1.5),
+            //     ..default()
+            // })
+            .insert(Rubidium87_780D2)
             ;
     }
 }
 
 fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut commands: Commands
 ) {
     // set up the camera
     let mut camera = OrthographicCameraBundle::new_3d();
@@ -101,7 +105,7 @@ fn setup(
     camera.transform = Transform::from_xyz(5.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y);
 
     // camera
-    commands.spawn_bundle(camera);
+    commands.spawn_bundle(camera).insert(DemoCamera::default());
 
 
     commands.spawn_bundle(PointLightBundle {

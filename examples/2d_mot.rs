@@ -13,7 +13,8 @@ use atomecs::magnetic::quadrupole::QuadrupoleField3D;
 use atomecs::shapes::Cuboid;
 use atomecs::sim_region::{SimulationVolume, VolumeType, SimulationRegionPlugin};
 use atomecs::species::{Strontium88_461};
-use atomecs_demos::atoms::add_meshes_to_atoms;
+use atomecs_demos::atoms::{add_meshes_to_atoms, EmissiveColorConfig};
+use atomecs_demos::camera::{control_camera, DemoCamera};
 use atomecs_demos::{add_atomecs_watermark, BevyAtomECSPlugin};
 use nalgebra::Vector3;
 use bevy::prelude::*;
@@ -39,12 +40,15 @@ fn main() {
     app.add_startup_system(setup_world);
     app.add_system(create_atoms);
     app.add_startup_system(setup_camera);
+    app.add_system(control_camera);
     app.add_startup_system(add_atomecs_watermark);
     app.insert_resource(atomecs::bevy_bridge::Scale { 0: 7e1 });
     app.insert_resource(Timestep { delta: 2.0e-5 });
     app.insert_resource(EmissionForceOption::On(EmissionForceConfiguration {
         explicit_threshold: 5,
     }));
+    app.insert_resource(EmissiveColorConfig { factor: 8.0 });
+    app.add_system(atomecs_demos::atoms::update_emissive_color::<Strontium88_461>.after(atomecs::laser_cooling::LaserCoolingSystems::CalculateActualPhotonsScattered));
     app.insert_resource(ScatteringFluctuationsOption::On);
     app.run();
 }
@@ -57,7 +61,7 @@ pub fn setup_world(mut commands: Commands) {
         .insert(Position::default());
 
     // Push beam along z
-    let push_beam_radius = 11e-3;
+    let push_beam_radius = 1e-3;
     let push_beam_power = 0.020;
     let push_beam_detuning = -103.0;
 
@@ -162,28 +166,26 @@ fn create_atoms(mut commands: Commands) {
     let mut rng = rand::thread_rng();
 
     // Add atoms
-    for _ in 0..3 {
-        commands.spawn()
-            .insert(Position {
-                pos: Vector3::new(
-                    -0.08, 0.0, 0.0
-                ),
-            })
-            .insert(Velocity {
-                vel: Vector3::new(
-                    vel_dist.sample(&mut rng) * 5.0 + 50.0,
-                    vel_dist.sample(&mut rng) * 2.0,
-                    vel_dist.sample(&mut rng) * 2.0,
-                ),
-            })
-            .insert(Force::default())
-            .insert(Mass { value: 88.0 })
-            .insert(Strontium88_461)
-            .insert(Atom)
-            .insert(NewlyCreated)
-            ;
-        }
-    }
+    commands.spawn()
+        .insert(Position {
+            pos: Vector3::new(
+                -0.08, 0.0, 0.0
+            ),
+        })
+        .insert(Velocity {
+            vel: Vector3::new(
+                vel_dist.sample(&mut rng) * 5.0 + 50.0,
+                vel_dist.sample(&mut rng) * 2.0,
+                vel_dist.sample(&mut rng) * 2.0,
+            ),
+        })
+        .insert(Force::default())
+        .insert(Mass { value: 88.0 })
+        .insert(Strontium88_461)
+        .insert(Atom)
+        .insert(NewlyCreated)
+        ;
+}
 
 
 fn setup_camera(
@@ -195,7 +197,7 @@ fn setup_camera(
     camera.transform = Transform::from_xyz(4.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y);
 
     // camera
-    commands.spawn_bundle(camera);
+    commands.spawn_bundle(camera).insert(DemoCamera::default());
 
     const HALF_SIZE: f32 = 10.0;
     commands.spawn_bundle(DirectionalLightBundle {
