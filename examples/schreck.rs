@@ -304,11 +304,12 @@ fn spawn_cad(
     mut commands: Commands,
     asset_server: Res<AssetServer>
 ) {
-    // commands
-    //     .spawn_bundle(TransformBundle::from(Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI / 2.0)).with_scale(Vec3::new(0.6,0.6,0.6))))
-    //     .with_children(|parent| {
-    //         parent.spawn_scene(asset_server.load("models/aion_source.gltf#Scene0"));
-    //     });
+    commands
+        //.spawn_bundle(TransformBundle::from(Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI / 2.0)).with_scale(Vec3::new(0.6,0.6,0.6))))
+        .spawn_bundle(TransformBundle::from(Transform::from_rotation(Quat::from_rotation_y(0.0)).with_scale(Vec3::new(0.2735,0.2735,0.2735))))
+        .with_children(|parent| {
+            parent.spawn_scene(asset_server.load("models/schreck.gltf#Scene0"));
+        });
 }
 
 //yeah its messy, but so is loading raw json via bevy asset lib right now.
