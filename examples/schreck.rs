@@ -268,7 +268,7 @@ fn setup_camera(
     // camera
     commands.spawn_bundle(camera).insert(demo_cam);
 
-    const HALF_SIZE: f32 = 10.0;
+    const HALF_SIZE: f32 = 100.0;
     commands.spawn_bundle(DirectionalLightBundle {
         directional_light: DirectionalLight {
             illuminance: 30000.0,
@@ -285,15 +285,16 @@ fn setup_camera(
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform {
-            translation: Vec3::new(0.0, 2.0, 0.0),
-            rotation: Quat::from_rotation_y(1.2) * Quat::from_rotation_x(-1.2),
-            ..default()
-        },
+        // transform: Transform {
+        //     translation: Vec3::new(0.0, 2.0, 0.0),
+        //     rotation: Quat::from_rotation_y(4.2) * Quat::from_rotation_x(-1.2),
+        //     ..default()
+        // },
+        transform : Transform::from_xyz(0.0,1.0,1.0).looking_at(Vec3::default(), Vec3::Y),
         ..default()
     });
 
-    commands.insert_resource(AmbientLight { brightness: 0.1, ..default() });
+    commands.insert_resource(AmbientLight { brightness: 0.3, ..default() });
 }
 
 // Component that will be used to tag entities in the scene
