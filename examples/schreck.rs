@@ -3,6 +3,7 @@
 
 use atomecs::atom::{Atom, Force, Mass};
 use atomecs::atom::{Position, Velocity};
+use atomecs::bevy_bridge::Scale;
 use atomecs::initiate::NewlyCreated;
 use atomecs::integrator::Timestep;
 use atomecs::laser::LaserPlugin;
@@ -29,6 +30,7 @@ const BEAM_NUMBER : usize = 22;
 fn main() {
 
     let mut app = App::new();
+    //app.add_plugin(EguiPlugin);
     app.add_plugin(atomecs::integrator::IntegrationPlugin);
     app.add_plugin(atomecs::initiate::InitiatePlugin);
     app.add_plugin(atomecs::magnetic::MagneticsPlugin);
@@ -62,13 +64,6 @@ fn main() {
 pub fn setup_world(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Create magnetic field.
-    // commands.spawn()
-    //     .insert(QuadrupoleField2D::gauss_per_cm(
-    //         27.0, 
-    //         Vector3::x_axis(), 
-    //         Unit::new_normalize(Vector3::new(0.0, 1.0, 1.0))
-    //     ))
-    //     .insert(Position::default());
     let grid: PrecalculatedMagneticFieldGrid = serde_json::from_str(SLOWER_FIELD)
             .expect("Could not load magnetic field grid from json file.");
     commands.spawn().insert(grid);
@@ -218,7 +213,7 @@ pub fn setup_world(mut commands: Commands, asset_server: Res<AssetServer>) {
             pos: Vector3::new(-1.0, 0.0, 0.0),
         })
         .insert(Cuboid {
-            half_width: Vector3::new(1.1, 0.1, 0.1),
+            half_width: Vector3::new(1.1, 0.03, 0.03),
         })
         .insert(SimulationVolume {
             volume_type: VolumeType::Inclusive,
@@ -256,17 +251,22 @@ fn create_atoms(mut commands: Commands) {
 
 
 fn setup_camera(
-    mut commands: Commands
+    mut commands: Commands,
+    scale: Res<Scale>,
 ) {
     // set up the camera
-    let mut camera = OrthographicCameraBundle::new_3d();
-    camera.orthographic_projection.scale = 23.0;
-    camera.orthographic_projection.near = -30.0;
     let look_at_target = Vec3::new(-1.0,0.0,0.0);
-    camera.transform = Transform::from_xyz(4.0, 4.0, 3.5).looking_at(look_at_target, Vec3::Y);
+    let demo_cam = DemoCamera::new(8.0, look_at_target);
+    let camera = Camera3dBundle {
+        projection: OrthographicProjection { scale: 0.05, near: -30.0, ..default() }.into(),
+        transform: demo_cam.get_transform(scale.0 as f32),
+        ..default()
+    };
+    //camera.orthographic_projection.scale = 23.0;
+    //camera.orthographic_projection.near = -30.0;
 
     // camera
-    commands.spawn_bundle(camera).insert(DemoCamera::new(8.0, look_at_target));
+    commands.spawn_bundle(camera).insert(demo_cam);
 
     const HALF_SIZE: f32 = 10.0;
     commands.spawn_bundle(DirectionalLightBundle {
@@ -287,7 +287,7 @@ fn setup_camera(
         },
         transform: Transform {
             translation: Vec3::new(0.0, 2.0, 0.0),
-            rotation: Quat::from_rotation_y(2.2) * Quat::from_rotation_x(-1.2),
+            rotation: Quat::from_rotation_y(1.2) * Quat::from_rotation_x(-1.2),
             ..default()
         },
         ..default()
@@ -305,11 +305,17 @@ fn spawn_cad(
     asset_server: Res<AssetServer>
 ) {
     commands
-        //.spawn_bundle(TransformBundle::from(Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI / 2.0)).with_scale(Vec3::new(0.6,0.6,0.6))))
-        .spawn_bundle(TransformBundle::from(Transform::from_rotation(Quat::from_rotation_y(0.0)).with_scale(Vec3::new(0.2735,0.2735,0.2735))))
-        .with_children(|parent| {
-            parent.spawn_scene(asset_server.load("models/schreck.gltf#Scene0"));
-        });
+        .spawn_bundle(
+            SceneBundle { 
+                scene: asset_server.load("models/schreck.gltf#Scene0"),
+                transform: Transform {
+                    scale: Vec3::new(0.2735,0.2735,0.2735),
+                    //rotation: Quat::from_rotation_y(0.0),
+                    ..default()
+                },
+                ..default() 
+            }
+        );
 }
 
 //yeah its messy, but so is loading raw json via bevy asset lib right now.

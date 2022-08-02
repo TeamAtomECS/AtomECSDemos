@@ -205,17 +205,14 @@ fn setup_camera(
     mut commands: Commands
 ) {
     // set up the camera
-    let mut camera = OrthographicCameraBundle::new_3d();
-    camera.orthographic_projection.scale = 3.0;
+    let mut camera = Camera3dBundle {
+        projection: OrthographicProjection { scale: 0.01, ..default() }.into(),
+        ..default()
+    };
     camera.transform = Transform::from_xyz(4.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y);
 
     // camera
     commands.spawn_bundle(camera);
-
-    // commands.spawn_bundle(PointLightBundle {
-    //     transform: Transform::from_xyz(3.0, 8.0, 5.0),
-    //     ..default()
-    // });
 
     const HALF_SIZE: f32 = 10.0;
     commands.spawn_bundle(DirectionalLightBundle {

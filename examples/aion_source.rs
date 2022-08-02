@@ -203,10 +203,11 @@ fn setup_camera(
     mut commands: Commands
 ) {
     // set up the camera
-    let mut camera = OrthographicCameraBundle::new_3d();
-    camera.orthographic_projection.scale = 10.0;
-    camera.orthographic_projection.near = -10.0;
-    camera.transform = Transform::from_xyz(4.0, 4.0, 3.5).looking_at(Vec3::ZERO, Vec3::Y);
+    let camera = Camera3dBundle {
+        projection: OrthographicProjection { scale: 0.03, near: -10.0, ..default() }.into(),
+        transform: Transform::from_xyz(4.0, 4.0, 3.5).looking_at(Vec3::ZERO, Vec3::Y),
+        ..default()
+    };
 
     // camera
     commands.spawn_bundle(camera).insert(DemoCamera::default());
@@ -248,8 +249,15 @@ fn spawn_cad(
     asset_server: Res<AssetServer>
 ) {
     commands
-        .spawn_bundle(TransformBundle::from(Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI / 2.0)).with_scale(Vec3::new(0.6,0.6,0.6))))
-        .with_children(|parent| {
-            parent.spawn_scene(asset_server.load("models/aion_source.gltf#Scene0"));
-        });
+        .spawn_bundle(
+            SceneBundle { 
+                scene: asset_server.load("models/aion_source.gltf#Scene0"),
+                transform: Transform {
+                    scale: Vec3::new(0.6,0.6,0.6),
+                    rotation: Quat::from_rotation_y(std::f32::consts::PI / 2.0),
+                    ..default()
+                },
+                ..default() 
+            }
+        );
 }

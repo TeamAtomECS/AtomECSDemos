@@ -16,34 +16,22 @@ pub fn add_atomecs_watermark(
     mut commands: Commands,
     asset_server: Res<AssetServer>
 ) {
-    commands.spawn_bundle(UiCameraBundle::default());
-    commands
-        .spawn_bundle(TextBundle {
-            style: Style {
+        commands
+        .spawn_bundle(
+            // Create a TextBundle that has a Text with a list of sections.
+            TextBundle::from_sections([
+                TextSection::new(
+                    "AtomECS",
+                    TextStyle {
+                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                        font_size: 50.0,
+                        color: Color::WHITE,
+                    },
+                )
+            ])
+            .with_style(Style {
                 align_self: AlignSelf::FlexEnd,
-                position_type: PositionType::Absolute,
-                position: Rect {
-                    bottom: Val::Px(0.0),
-                    right: Val::Px(0.0),
-                    ..default()
-                },
                 ..default()
-            },
-            // Use the `Text::with_section` constructor
-            text: Text::with_section(
-                // Accepts a `String` or any type that converts into a `String`, such as `&str`
-                "AtomECS",
-                TextStyle {
-                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                    font_size: 50.0,
-                    color: Color::WHITE,
-                },
-                // Note: You can use `Default::default()` in place of the `TextAlignment`
-                TextAlignment {
-                    horizontal: HorizontalAlign::Center,
-                    ..default()
-                },
-            ),
-            ..default()
-        });
+            }),
+        );
 }
