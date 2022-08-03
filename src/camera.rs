@@ -9,6 +9,7 @@ pub struct DemoCamera {
     pub delta: f32,
     pub radius: f32,
     pub target: Vec3,
+    pub rotating: bool
 }
 impl DemoCamera {
     pub fn get_quaternion(&self) -> Quat {
@@ -27,22 +28,41 @@ impl DemoCamera {
 }
 impl Default for DemoCamera {
     fn default() -> Self {
-        Self { orbit: 0.6, delta: 0.6, radius: 5.0, target: Vec3::ZERO }
+        Self { orbit: 0.6, delta: 0.6, radius: 5.0, target: Vec3::ZERO, rotating: false }
     }
 }
 
 pub fn control_camera(
     mut mouse_motion_events: EventReader<MouseMotion>,
     mouse_button_input: Res<Input<MouseButton>>,
+    wnds: Res<Windows>,
     scale: Res<Scale>,
-    mut query: Query<(&mut DemoCamera, &mut Transform)>,
+    mut query: Query<(&mut DemoCamera, &mut Transform, &Camera)>,
 ) {
     let mut delta = Vec2::ZERO;
     for event in mouse_motion_events.iter() {
         delta += event.delta * 1e-2;
     }
-    for (mut demo_camera, mut transform) in query.iter_mut() {
-        if mouse_button_input.pressed(MouseButton::Right) {
+
+    for (mut demo_camera, mut transform, camera) in query.iter_mut() {
+        if mouse_button_input.just_pressed(MouseButton::Left) {
+            // only do something if mouse is clicked inside viewport
+            if let Some(viewport) = &camera.viewport {
+                if let Some(screen_pos) = wnds.get_primary().unwrap().cursor_position() {
+                    // for now - only support bar on the right or bottom.
+                    if screen_pos.x > 0.95*viewport.physical_size.x as f32 || screen_pos.y > viewport.physical_size.y as f32 {
+                        continue;
+                    }
+                }
+            }
+            demo_camera.rotating = true;
+        }
+
+        if mouse_button_input.just_released(MouseButton::Left) {
+            demo_camera.rotating = false;
+        }
+
+        if demo_camera.rotating {
             demo_camera.orbit = demo_camera.orbit + delta.x;
             demo_camera.delta = demo_camera.delta + delta.y;
             demo_camera.delta = demo_camera.delta.min(1.4);

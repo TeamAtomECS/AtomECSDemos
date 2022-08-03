@@ -64,6 +64,7 @@ fn main() {
     app.add_system(update_cooling_beams);
     app.add_system(update_push_beam);
     app.add_system(update_magnetic_fields);
+    app.add_system(update_cad);
     app
     .insert_resource(WindowDescriptor {
       fit_canvas_to_parent: true,
@@ -259,9 +260,8 @@ fn setup_camera(
     commands.insert_resource(AmbientLight { brightness: 0.1, ..default() });
 }
 
-// Component that will be used to tag entities in the scene
 #[derive(Component)]
-struct EntityInMyScene;
+pub struct CAD;
 
 fn spawn_cad(
     mut commands: Commands,
@@ -276,9 +276,10 @@ fn spawn_cad(
                     rotation: Quat::from_rotation_y(std::f32::consts::PI / 2.0),
                     ..default()
                 },
-                ..default() 
+                ..default()
             }
-        );
+        )
+        .insert(CAD);
 }
 
 pub struct ExperimentConfiguration {
@@ -289,7 +290,8 @@ pub struct ExperimentConfiguration {
     pub bias_field_x: f64,
     pub bias_field_y: f64,
     pub bias_field_z: f64,
-    pub quad_gradient: f64
+    pub quad_gradient: f64,
+    pub show_cad: bool,
 }
 impl Default for ExperimentConfiguration {
     fn default() -> Self {
@@ -302,6 +304,7 @@ impl Default for ExperimentConfiguration {
             bias_field_y: 0.0,
             bias_field_z: 0.0,
             quad_gradient: 27.0,
+            show_cad: true
         }
     }
 }
@@ -328,7 +331,7 @@ fn experiment_controls(
             ));
             ui.add_space(0.1);
             ui.label("A simulation of the cold atom source used to laser cool and capture atoms ejected from a hot oven.");
-            ui.label("Click and drag the right mouse button to rotate the view.");
+            ui.label("Click and drag the left mouse button to rotate the view.");
             ui.add_space(0.1);
             ui.label("Cooling Beams:");
             ui.add(egui::Slider::new(&mut config.cooling_beam_detuning, -120.0..=-15.0).text("Cooling beam detuning (MHz)"));
@@ -343,6 +346,9 @@ fn experiment_controls(
             ui.add(egui::Slider::new(&mut config.bias_field_x, -30.0..=30.0).text("Bias field, x (G)"));
             ui.add(egui::Slider::new(&mut config.bias_field_y, -30.0..=30.0).text("Bias field, y (G)"));
             ui.add(egui::Slider::new(&mut config.bias_field_z, -30.0..=30.0).text("Bias field, z (G)"));
+            ui.add_space(1.0);
+            ui.label("Miscellaneous:");
+            ui.add(egui::Checkbox::new(&mut config.show_cad, "Show CAD?"));
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         }).response.rect;
     for (mut camera, mut projection) in camera_query.iter_mut() {
@@ -383,5 +389,14 @@ fn update_magnetic_fields(
     for (mut quad, mut uniform) in query.iter_mut() {
         quad.gradient = 0.01 * config.quad_gradient;
         uniform.field = UniformMagneticField::gauss(Vector3::new(config.bias_field_x, config.bias_field_y, config.bias_field_z)).field;
+    }
+}
+
+fn update_cad(
+    mut query: Query<&mut Visibility, With<CAD>>,
+    config: Res<ExperimentConfiguration>
+) {
+    for mut visibility in query.iter_mut() {
+        visibility.is_visible = config.show_cad;
     }
 }

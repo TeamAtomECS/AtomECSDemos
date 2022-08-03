@@ -62,14 +62,17 @@ fn main() {
     app.add_startup_system(setup_world);
     app.add_startup_system(create_atoms);
     app.add_startup_system(setup_camera);
-    app.add_startup_system(add_atomecs_watermark);
+    //app.add_startup_system(add_atomecs_watermark);
     app.insert_resource(atomecs::bevy_bridge::Scale { 0: 1e3 });
     app.insert_resource(Timestep { delta: 2.0e-5 });
     app.insert_resource(EmissionForceOption::On(EmissionForceConfiguration {
         explicit_threshold: 5,
     }));
     app.insert_resource(ScatteringFluctuationsOption::On);
-    //app.add_system(atomecs_demos::atoms::update_emissive_color::<Rubidium87_780D2>.after(atomecs::laser_cooling::LaserCoolingSystems::CalculateActualPhotonsScattered));
+    app.insert_resource(WindowDescriptor {
+            fit_canvas_to_parent: true,
+            ..default()
+        });
     app.run();
 }
 
