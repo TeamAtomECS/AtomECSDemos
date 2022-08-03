@@ -11,13 +11,16 @@ use atomecs::laser_cooling::force::{EmissionForceOption, EmissionForceConfigurat
 use atomecs::laser_cooling::photons_scattered::ScatteringFluctuationsOption;
 use atomecs::laser_cooling::{CoolingLight, LaserCoolingPlugin};
 use atomecs::magnetic::quadrupole::QuadrupoleField2D;
+use atomecs::magnetic::uniform::UniformMagneticField;
 use atomecs::shapes::Cuboid;
 use atomecs::sim_region::{SimulationVolume, VolumeType, SimulationRegionPlugin};
 use atomecs::species::{Strontium88_461};
 use atomecs_demos::atoms::{add_meshes_to_atoms, EmissiveColorConfig, MaterialColorConfig};
 use atomecs_demos::camera::{control_camera, DemoCamera};
 use atomecs_demos::lasers::add_meshes_to_lasers;
-use atomecs_demos::{add_atomecs_watermark, BevyAtomECSPlugin};
+use atomecs_demos::{BevyAtomECSPlugin};
+use bevy::render::camera::{Viewport, Projection, CameraProjection};
+use bevy_egui::{EguiContext, egui, EguiPlugin};
 use nalgebra::{Vector3, Unit};
 use bevy::prelude::*;
 use rand_distr::{Normal, Distribution};
@@ -28,6 +31,8 @@ const BEAM_NUMBER : usize = 6;
 fn main() {
 
     let mut app = App::new();
+    app.add_plugins(DefaultPlugins);
+    app.add_plugin(EguiPlugin);
     app.add_plugin(atomecs::integrator::IntegrationPlugin);
     app.add_plugin(atomecs::initiate::InitiatePlugin);
     app.add_plugin(atomecs::magnetic::MagneticsPlugin);
@@ -36,7 +41,6 @@ fn main() {
     app.add_plugin(SimulationRegionPlugin);
     app.add_plugin(BevyAtomECSPlugin);
     app.add_system(atomecs::output::console_output::console_output);
-    app.add_plugins(DefaultPlugins);
     app.add_system(atomecs::bevy_bridge::copy_positions);
     app.add_startup_system(setup_world);
     app.add_system(add_meshes_to_atoms::<Strontium88_461>);
@@ -45,7 +49,7 @@ fn main() {
     app.add_system(create_atoms);
     app.add_system(control_camera);
     app.add_startup_system(setup_camera);
-    app.add_startup_system(add_atomecs_watermark);
+    //app.add_startup_system(add_atomecs_watermark);
     app.add_startup_system(spawn_cad);
     app.insert_resource(atomecs::bevy_bridge::Scale { 0: 7e1 });
     app.insert_resource(Timestep { delta: 2.0e-5 });
@@ -55,6 +59,16 @@ fn main() {
     app.insert_resource(EmissiveColorConfig { factor: 8.0 });
     app.insert_resource(MaterialColorConfig { factor: 1.0 });
     app.insert_resource(ScatteringFluctuationsOption::On);
+    app.init_resource::<ExperimentConfiguration>();
+    app.add_system(experiment_controls);
+    app.add_system(update_cooling_beams);
+    app.add_system(update_push_beam);
+    app.add_system(update_magnetic_fields);
+    app
+    .insert_resource(WindowDescriptor {
+      fit_canvas_to_parent: true,
+      ..default()
+    });
     app.run();
 }
 
@@ -63,17 +77,17 @@ pub fn setup_world(mut commands: Commands) {
     // Create magnetic field.
     commands.spawn()
         .insert(QuadrupoleField2D::gauss_per_cm(
-            27.0, 
+            27.0, // value overridden below.
             Vector3::x_axis(), 
             Unit::new_normalize(Vector3::new(0.0, 1.0, 1.0))
         ))
+        .insert(UniformMagneticField::gauss(Vector3::new(0.0,0.0,0.0)))
         .insert(Position::default());
 
     // Push beam along z
     let push_beam_radius = 4e-3;
     let push_beam_power = 0.020;
     let push_beam_detuning = -103.0;
-
     commands.spawn()
         .insert(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
@@ -86,7 +100,8 @@ pub fn setup_world(mut commands: Commands) {
         .insert(CoolingLight::for_transition::<Strontium88_461>(
             push_beam_detuning,
             -1,
-        ));
+        ))
+        .insert(PushBeam::default());
 
     // Create cooling lasers.
     let detuning = -40.0;
@@ -104,7 +119,8 @@ pub fn setup_world(mut commands: Commands) {
         .insert(CoolingLight::for_transition::<Strontium88_461>(
             detuning,
             1,
-        ));
+        ))
+        .insert(MOTBeam::default());
     commands.spawn()
         .insert(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
@@ -117,7 +133,8 @@ pub fn setup_world(mut commands: Commands) {
         .insert(CoolingLight::for_transition::<Strontium88_461>(
             detuning,
             1,
-        ));
+        ))
+        .insert(MOTBeam::default());
     commands.spawn()
         .insert(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
@@ -130,7 +147,8 @@ pub fn setup_world(mut commands: Commands) {
         .insert(CoolingLight::for_transition::<Strontium88_461>(
             detuning,
             -1,
-        ));
+        ))
+        .insert(MOTBeam::default());
     commands.spawn()
         .insert(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
@@ -143,7 +161,8 @@ pub fn setup_world(mut commands: Commands) {
         .insert(CoolingLight::for_transition::<Strontium88_461>(
             detuning,
             -1,
-        ));
+        ))
+        .insert(MOTBeam::default());
 
     // Use a simulation bound so that atoms that escape the capture region are deleted from the simulation.
     commands.spawn()
@@ -260,4 +279,109 @@ fn spawn_cad(
                 ..default() 
             }
         );
+}
+
+pub struct ExperimentConfiguration {
+    pub cooling_beam_detuning: f64,
+    pub cooling_beam_power: f64,
+    pub push_beam_power: f64,
+    pub push_beam_detuning: f64,
+    pub bias_field_x: f64,
+    pub bias_field_y: f64,
+    pub bias_field_z: f64,
+    pub quad_gradient: f64
+}
+impl Default for ExperimentConfiguration {
+    fn default() -> Self {
+        ExperimentConfiguration {
+            cooling_beam_detuning: -40.0,
+            cooling_beam_power: 230.0,
+            push_beam_power: 20.0,
+            push_beam_detuning: -103.0,
+            bias_field_x: 0.0,
+            bias_field_y: 0.0,
+            bias_field_z: 0.0,
+            quad_gradient: 27.0,
+        }
+    }
+}
+
+#[derive(Component, Default)]
+pub struct MOTBeam;
+
+#[derive(Component, Default)]
+pub struct PushBeam;
+
+fn experiment_controls(
+    mut egui_context: ResMut<EguiContext>,
+    mut config: ResMut<ExperimentConfiguration>,
+    mut camera_query: Query<(&mut Camera, &mut Projection)>
+) {
+    
+    let rect = egui::SidePanel::right("right")
+        .resizable(true)
+        .show(egui_context.ctx_mut(), |ui| {
+            ui.heading("AION Source");
+            ui.add(egui::Hyperlink::from_label_and_url(
+                "powered by AtomECS",
+                "https://github.com/TeamAtomECS/AtomECS/",
+            ));
+            ui.add_space(0.1);
+            ui.label("A simulation of the cold atom source used to laser cool and capture atoms ejected from a hot oven.");
+            ui.label("Click and drag the right mouse button to rotate the view.");
+            ui.add_space(0.1);
+            ui.label("Cooling Beams:");
+            ui.add(egui::Slider::new(&mut config.cooling_beam_detuning, -120.0..=-15.0).text("Cooling beam detuning (MHz)"));
+            ui.add(egui::Slider::new(&mut config.cooling_beam_power, 0.0..=230.0).text("Cooling beam power (mW)"));
+            ui.add_space(0.1);
+            ui.label("Push Beam:");
+            ui.add(egui::Slider::new(&mut config.push_beam_detuning, -400.0..=100.0).text("Push beam detuning (MHz)"));
+            ui.add(egui::Slider::new(&mut config.push_beam_power, 0.0..=30.0).text("Push beam power (mW)"));
+            ui.add_space(0.1);
+            ui.label("Magnetic fields:");
+            ui.add(egui::Slider::new(&mut config.quad_gradient, 0.0..=80.0).text("Quadrupole gradient (G/cm)"));
+            ui.add(egui::Slider::new(&mut config.bias_field_x, -30.0..=30.0).text("Bias field, x (G)"));
+            ui.add(egui::Slider::new(&mut config.bias_field_y, -30.0..=30.0).text("Bias field, y (G)"));
+            ui.add(egui::Slider::new(&mut config.bias_field_z, -30.0..=30.0).text("Bias field, z (G)"));
+            ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
+        }).response.rect;
+    for (mut camera, mut projection) in camera_query.iter_mut() {
+        camera.viewport = Some(Viewport {
+            physical_size: UVec2 { x: rect.left() as u32, y: rect.height() as u32 },
+            ..default()
+        });
+        projection.update(rect.left(), rect.height());
+    }
+}
+
+fn update_cooling_beams(
+    mut query: Query<(&mut CoolingLight, &mut GaussianBeam), With<MOTBeam>>,
+    config: Res<ExperimentConfiguration>
+) {
+    for (mut light, mut gaussian) in query.iter_mut() {
+        let wavelength = CoolingLight::for_transition::<Strontium88_461>(config.cooling_beam_detuning, 1).wavelength;
+        light.wavelength = wavelength;
+        gaussian.power = 1e-3 * config.cooling_beam_power;
+    }
+}
+
+fn update_push_beam(
+    mut query: Query<(&mut CoolingLight, &mut GaussianBeam), With<PushBeam>>,
+    config: Res<ExperimentConfiguration>
+) {
+    for (mut light, mut gaussian) in query.iter_mut() {
+        let wavelength = CoolingLight::for_transition::<Strontium88_461>(config.push_beam_detuning, 1).wavelength;
+        light.wavelength = wavelength;
+        gaussian.power = 1e-3 * config.push_beam_power;
+    }
+}
+
+fn update_magnetic_fields(
+    mut query: Query<(&mut QuadrupoleField2D, &mut UniformMagneticField)>,
+    config: Res<ExperimentConfiguration>
+) {
+    for (mut quad, mut uniform) in query.iter_mut() {
+        quad.gradient = 0.01 * config.quad_gradient;
+        uniform.field = UniformMagneticField::gauss(Vector3::new(config.bias_field_x, config.bias_field_y, config.bias_field_z)).field;
+    }
 }
