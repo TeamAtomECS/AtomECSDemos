@@ -71,6 +71,7 @@ fn main() {
     app.insert_resource(ScatteringFluctuationsOption::On);
     app.insert_resource(WindowDescriptor {
             fit_canvas_to_parent: true,
+            canvas: Some("#bevy".to_string()),
             ..default()
         });
     app.run();
