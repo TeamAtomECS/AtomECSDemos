@@ -42,7 +42,7 @@ pub fn control_camera(
         delta += event.delta * 1e-2;
     }
     for (mut demo_camera, mut transform) in query.iter_mut() {
-        if mouse_button_input.pressed(MouseButton::Left) {
+        if mouse_button_input.pressed(MouseButton::Right) {
             demo_camera.orbit = demo_camera.orbit + delta.x;
             demo_camera.delta = demo_camera.delta + delta.y;
             demo_camera.delta = demo_camera.delta.min(1.4);
