@@ -20,6 +20,7 @@ use atomecs_demos::camera::{control_camera, DemoCamera};
 use atomecs_demos::lasers::add_meshes_to_lasers;
 use atomecs_demos::{BevyAtomECSPlugin};
 use bevy::render::camera::{Viewport, Projection, CameraProjection};
+use bevy::window::WindowMode;
 use bevy_egui::{EguiContext, egui, EguiPlugin};
 use nalgebra::{Vector3, Unit};
 use bevy::prelude::*;
@@ -304,7 +305,7 @@ impl Default for ExperimentConfiguration {
             bias_field_y: 0.0,
             bias_field_z: 0.0,
             quad_gradient: 27.0,
-            show_cad: true
+            show_cad: true,
         }
     }
 }
@@ -318,20 +319,28 @@ pub struct PushBeam;
 fn experiment_controls(
     mut egui_context: ResMut<EguiContext>,
     mut config: ResMut<ExperimentConfiguration>,
-    mut camera_query: Query<(&mut Camera, &mut Projection)>
+    mut camera_query: Query<(&mut Camera, &mut Projection)>,
+    mut windows: ResMut<Windows>,
 ) {
     
     let rect = egui::SidePanel::right("right")
         .resizable(true)
         .show(egui_context.ctx_mut(), |ui| {
             ui.heading("AION Source");
-            ui.add(egui::Hyperlink::from_label_and_url(
-                "powered by AtomECS",
-                "https://github.com/TeamAtomECS/AtomECS/",
-            ));
-            ui.add_space(0.1);
+            ui.separator();
             ui.label("A simulation of the cold atom source used to laser cool and capture atoms ejected from a hot oven.");
             ui.label("Click and drag the left mouse button to rotate the view.");
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 0.0;
+                ui.label("Powered by ");
+                ui.hyperlink_to(
+                    "AtomECS",
+                    "https://github.com/TeamAtomECS/AtomECS/",
+                );
+                ui.label(".");
+            });
+            ui.add_space(0.1);
+            ui.separator();
             ui.add_space(0.1);
             ui.label("Cooling Beams:");
             ui.add(egui::Slider::new(&mut config.cooling_beam_detuning, -120.0..=-15.0).text("Cooling beam detuning (MHz)"));
@@ -347,8 +356,13 @@ fn experiment_controls(
             ui.add(egui::Slider::new(&mut config.bias_field_y, -30.0..=30.0).text("Bias field, y (G)"));
             ui.add(egui::Slider::new(&mut config.bias_field_z, -30.0..=30.0).text("Bias field, z (G)"));
             ui.add_space(1.0);
-            ui.label("Miscellaneous:");
+            ui.separator();
             ui.add(egui::Checkbox::new(&mut config.show_cad, "Show CAD?"));
+            if ui.add(egui::Button::new("Fullscreen mode")).clicked() {
+                for window in windows.iter_mut() {
+                    window.set_mode(WindowMode::BorderlessFullscreen);
+                }
+            }
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         }).response.rect;
     for (mut camera, mut projection) in camera_query.iter_mut() {
