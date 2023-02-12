@@ -209,7 +209,7 @@ checksum = "7a40729d2133846d9ed0ea60a8b9541bccddab49cd30f0715a1da672fe9a2524"
 [[package]]
 name = "atomecs"
 version = "0.8.1"
-source = "git+https://github.com/TeamAtomECS/AtomECS?branch=bevy#93edf53f9e6236f8df974525d068b0d5549748fc"
+source = "git+https://github.com/TeamAtomECS/AtomECS?branch=bevy#f67d5fe11c8646c8e56b0bc48541362e1bac8433"
 dependencies = [
  "assert_approx_eq",
  "atomecs-derive",

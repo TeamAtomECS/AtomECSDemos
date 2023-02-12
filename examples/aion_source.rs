@@ -29,7 +29,6 @@ const BEAM_NUMBER: usize = 6;
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins);
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         window: WindowDescriptor {
             fit_canvas_to_parent: true,
@@ -49,12 +48,12 @@ fn main() {
     app.add_system(atomecs::bevy_bridge::copy_positions);
     app.add_startup_system(setup_world);
     app.add_system(add_meshes_to_atoms::<Strontium88_461>);
-    //app.add_system(atomecs_demos::atoms::update_emissive_color::<Strontium88_461>);
+    // app.add_system(atomecs_demos::atoms::update_emissive_color::<Strontium88_461>);
     app.add_system(add_meshes_to_lasers::<Strontium88_461>);
     app.add_system(create_atoms);
     app.add_system(control_camera);
     app.add_startup_system(setup_camera);
-    //app.add_startup_system(add_atomecs_watermark);
+    // app.add_startup_system(atomecs_demos::add_atomecs_watermark);
     app.add_startup_system(spawn_cad);
     app.insert_resource(atomecs::bevy_bridge::Scale { 0: 7e1 });
     app.insert_resource(Timestep { delta: 2.0e-5 });
