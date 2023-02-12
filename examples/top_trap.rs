@@ -1,24 +1,24 @@
 //! Time-Orbiting Potential (TOP) trap
-//! 
+//!
 //! cargo install -f wasm-bindgen-cli
 //! cargo build --example top_trap --target wasm32-unknown-unknown
 //! wasm-bindgen --out-dir target/web target/wasm32-unknown-unknown/release/examples/doppler_limit.wasm
-//! 
+//!
 extern crate atomecs;
 extern crate nalgebra;
 use atomecs::atom::{Atom, Force, Mass, Position, Velocity};
 use atomecs::initiate::NewlyCreated;
 use atomecs::integrator::Timestep;
-use atomecs::magnetic::force::{MagneticDipole};
+use atomecs::magnetic::force::MagneticDipole;
 use atomecs::magnetic::quadrupole::QuadrupoleField3D;
 use atomecs::magnetic::top::UniformFieldRotator;
+use atomecs::species::Rubidium87_780D2;
 use atomecs_demos::atoms::add_meshes_to_atoms;
 use atomecs_demos::camera::{control_camera, DemoCamera};
 use atomecs_demos::{add_atomecs_watermark, BevyAtomECSPlugin};
+use bevy::prelude::*;
 use nalgebra::Vector3;
 use rand_distr::{Distribution, Normal};
-use bevy::prelude::*;
-use atomecs::species::{Rubidium87_780D2};
 
 fn main() {
     let mut app = App::new();
@@ -38,18 +38,17 @@ fn main() {
     app.add_startup_system(setup_atoms);
 
     // Create magnetic field.
-    app.world.spawn()
-        .insert(QuadrupoleField3D::gauss_per_cm(80.0, Vector3::z()))
+    app.world
+        .spawn(QuadrupoleField3D::gauss_per_cm(80.0, Vector3::z()))
         .insert(Position::default());
 
-    app.world.spawn()
-        .insert(UniformFieldRotator { amplitude: 20.0, frequency: 3000.0 }) // Time averaged TOP theory assumes rotation frequency much greater than velocity of atoms
+    app.world.spawn(UniformFieldRotator { amplitude: 20.0, frequency: 3000.0 }) // Time averaged TOP theory assumes rotation frequency much greater than velocity of atoms
         .insert(atomecs::magnetic::uniform::UniformMagneticField { field: Vector3::new(0.0,0.0,0.0)}) // Time averaged TOP theory assumes rotation frequency much greater than velocity of atoms
         ;
 
     // Define timestep
     app.world.insert_resource(Timestep { delta: 5e-5 }); //Aliasing of TOP field or other strange effects can occur if timestep is not much smaller than TOP field period.
-                                                //Timestep must also be much smaller than mean collision time.
+                                                         //Timestep must also be much smaller than mean collision time.
 
     // Run the simulation for a number of steps.
     // for _i in 0..10000 {
@@ -58,15 +57,13 @@ fn main() {
     app.run();
 }
 
-fn setup_atoms(mut commands: Commands
-) {
+fn setup_atoms(mut commands: Commands) {
     let p_dist = Normal::new(0.0, 50e-6).unwrap();
     let v_dist = Normal::new(0.0, 0.004).unwrap(); // ~100nK
 
     for _i in 0..5000 {
         commands
-            .spawn()
-            .insert(Position {
+            .spawn(Position {
                 pos: Vector3::new(
                     p_dist.sample(&mut rand::thread_rng()),
                     p_dist.sample(&mut rand::thread_rng()),
@@ -91,23 +88,24 @@ fn setup_atoms(mut commands: Commands
             //     transform: Transform::from_xyz(1.5, 0.5, 1.5),
             //     ..default()
             // })
-            .insert(Rubidium87_780D2)
-            ;
+            .insert(Rubidium87_780D2);
     }
 }
 
-fn setup(
-    mut commands: Commands
-) {
+fn setup(mut commands: Commands) {
     // set up the camera
     let camera = Camera3dBundle {
-        projection: OrthographicProjection { scale: 0.01, ..default() }.into(),
+        projection: OrthographicProjection {
+            scale: 0.01,
+            ..default()
+        }
+        .into(),
         transform: Transform::from_xyz(5.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     };
-    commands.spawn_bundle(camera).insert(DemoCamera::default());
+    commands.spawn(camera).insert(DemoCamera::default());
 
-    commands.spawn_bundle(PointLightBundle {
+    commands.spawn(PointLightBundle {
         transform: Transform::from_xyz(3.0, 8.0, 5.0),
         ..default()
     });

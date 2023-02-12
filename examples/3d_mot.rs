@@ -7,7 +7,7 @@
 //! Some parameters of the simulation can be set by writing a configuration file called `doppler.json`. This file
 //! allows the user to control parameters, eg detuning. If the file is not written, a default detuning of 0.5 Gamma
 //! is used, which corresponds to the minimum Doppler temperature.
-//! 
+//!
 //! cargo build --example doppler_limit --target wasm32-unknown-unknown --release
 //! wasm-bindgen --out-dir target/web target/wasm32-unknown-unknown/release/examples/doppler_limit.wasm --target web
 
@@ -16,20 +16,20 @@ extern crate nalgebra;
 use atomecs::atom::{Atom, Force, Mass, Position, Velocity};
 use atomecs::initiate::NewlyCreated;
 use atomecs::integrator::Timestep;
-use atomecs::laser::LaserPlugin;
 use atomecs::laser::gaussian::GaussianBeam;
+use atomecs::laser::LaserPlugin;
 use atomecs::laser_cooling::force::{EmissionForceConfiguration, EmissionForceOption};
 use atomecs::laser_cooling::photons_scattered::ScatteringFluctuationsOption;
 use atomecs::laser_cooling::{CoolingLight, LaserCoolingPlugin};
 use atomecs::magnetic::quadrupole::QuadrupoleField3D;
-use atomecs::species::{Rubidium87_780D2};
+use atomecs::species::Rubidium87_780D2;
 use atomecs_demos::atoms::add_meshes_to_atoms;
-use atomecs_demos::{BevyAtomECSPlugin, add_atomecs_watermark};
+use atomecs_demos::BevyAtomECSPlugin;
+use bevy::prelude::*;
 use nalgebra::Vector3;
 use rand_distr::{Distribution, Normal};
-use bevy::prelude::*;
 
-const BEAM_NUMBER : usize = 6;
+const BEAM_NUMBER: usize = 6;
 
 pub struct DopperSimulationConfiguration {
     /// Detuning of laser beams, in units of MHz.
@@ -47,17 +47,23 @@ impl Default for DopperSimulationConfiguration {
 }
 
 fn main() {
-
     let mut app = App::new();
     app.add_plugin(atomecs::integrator::IntegrationPlugin);
     app.add_plugin(atomecs::initiate::InitiatePlugin);
     app.add_plugin(atomecs::magnetic::MagneticsPlugin);
-    app.add_plugin(LaserPlugin::<{BEAM_NUMBER}>);
-    app.add_plugin(LaserCoolingPlugin::<Rubidium87_780D2, {BEAM_NUMBER}>::default());
+    app.add_plugin(LaserPlugin::<{ BEAM_NUMBER }>);
+    app.add_plugin(LaserCoolingPlugin::<Rubidium87_780D2, { BEAM_NUMBER }>::default());
     app.add_plugin(BevyAtomECSPlugin);
     app.add_system(add_meshes_to_atoms::<Rubidium87_780D2>);
     app.add_system(atomecs::output::console_output::console_output);
-    app.add_plugins(DefaultPlugins);
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        window: WindowDescriptor {
+            fit_canvas_to_parent: true,
+            canvas: Some("#bevy".to_string()),
+            ..default()
+        },
+        ..default()
+    }));
     app.add_system(atomecs::bevy_bridge::copy_positions);
     app.add_startup_system(setup_world);
     app.add_startup_system(create_atoms);
@@ -69,21 +75,15 @@ fn main() {
         explicit_threshold: 5,
     }));
     app.insert_resource(ScatteringFluctuationsOption::On);
-    app.insert_resource(WindowDescriptor {
-            fit_canvas_to_parent: true,
-            canvas: Some("#bevy".to_string()),
-            ..default()
-        });
     app.run();
 }
 
 pub fn setup_world(mut commands: Commands) {
-
     let configuration = DopperSimulationConfiguration::default();
 
     // Create magnetic field.
-    commands.spawn()
-        .insert(QuadrupoleField3D::gauss_per_cm(0.001 * 18.2, Vector3::z()))
+    commands
+        .spawn(QuadrupoleField3D::gauss_per_cm(0.001 * 18.2, Vector3::z()))
         .insert(Position {
             pos: Vector3::new(0.0, 0.0, 0.0),
         });
@@ -94,8 +94,8 @@ pub fn setup_world(mut commands: Commands) {
     let radius = 66.7e-3 / (2.0_f64.sqrt());
     let beam_centre = Vector3::new(0.0, 0.0, 0.0);
 
-    commands.spawn()
-        .insert(GaussianBeam {
+    commands
+        .spawn(GaussianBeam {
             intersection: beam_centre,
             e_radius: radius,
             power,
@@ -104,11 +104,10 @@ pub fn setup_world(mut commands: Commands) {
             ellipticity: 0.0,
         })
         .insert(CoolingLight::for_transition::<Rubidium87_780D2>(
-            detuning,
-            -1,
+            detuning, -1,
         ));
-    commands.spawn()
-        .insert(GaussianBeam {
+    commands
+        .spawn(GaussianBeam {
             intersection: beam_centre,
             e_radius: radius,
             power,
@@ -117,11 +116,10 @@ pub fn setup_world(mut commands: Commands) {
             ellipticity: 0.0,
         })
         .insert(CoolingLight::for_transition::<Rubidium87_780D2>(
-            detuning,
-            -1,
+            detuning, -1,
         ));
-    commands.spawn()
-        .insert(GaussianBeam {
+    commands
+        .spawn(GaussianBeam {
             intersection: beam_centre,
             e_radius: radius,
             power,
@@ -130,11 +128,10 @@ pub fn setup_world(mut commands: Commands) {
             ellipticity: 0.0,
         })
         .insert(CoolingLight::for_transition::<Rubidium87_780D2>(
-            detuning,
-            1,
+            detuning, 1,
         ));
-    commands.spawn()
-        .insert(GaussianBeam {
+    commands
+        .spawn(GaussianBeam {
             intersection: beam_centre,
             e_radius: radius,
             power,
@@ -143,11 +140,10 @@ pub fn setup_world(mut commands: Commands) {
             ellipticity: 0.0,
         })
         .insert(CoolingLight::for_transition::<Rubidium87_780D2>(
-            detuning,
-            1,
+            detuning, 1,
         ));
-    commands.spawn()
-        .insert(GaussianBeam {
+    commands
+        .spawn(GaussianBeam {
             intersection: beam_centre,
             e_radius: radius,
             power,
@@ -156,11 +152,10 @@ pub fn setup_world(mut commands: Commands) {
             ellipticity: 0.0,
         })
         .insert(CoolingLight::for_transition::<Rubidium87_780D2>(
-            detuning,
-            1,
+            detuning, 1,
         ));
-    commands.spawn()
-        .insert(GaussianBeam {
+    commands
+        .spawn(GaussianBeam {
             intersection: beam_centre,
             e_radius: radius,
             power,
@@ -169,8 +164,7 @@ pub fn setup_world(mut commands: Commands) {
             ellipticity: 0.0,
         })
         .insert(CoolingLight::for_transition::<Rubidium87_780D2>(
-            detuning,
-            1,
+            detuning, 1,
         ));
 }
 
@@ -181,8 +175,8 @@ fn create_atoms(mut commands: Commands) {
 
     // Add atoms
     for _ in 0..1000 {
-        commands.spawn()
-            .insert(Position {
+        commands
+            .spawn(Position {
                 pos: Vector3::new(
                     pos_dist.sample(&mut rng),
                     pos_dist.sample(&mut rng) - 0.002,
@@ -200,26 +194,27 @@ fn create_atoms(mut commands: Commands) {
             .insert(Mass { value: 87.0 })
             .insert(Rubidium87_780D2)
             .insert(Atom)
-            .insert(NewlyCreated)
-            ;
-        }
+            .insert(NewlyCreated);
     }
+}
 
-fn setup_camera(
-    mut commands: Commands
-) {
+fn setup_camera(mut commands: Commands) {
     // set up the camera
     let mut camera = Camera3dBundle {
-        projection: OrthographicProjection { scale: 0.01, ..default() }.into(),
+        projection: OrthographicProjection {
+            scale: 0.01,
+            ..default()
+        }
+        .into(),
         ..default()
     };
     camera.transform = Transform::from_xyz(4.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y);
 
     // camera
-    commands.spawn_bundle(camera);
+    commands.spawn(camera);
 
     const HALF_SIZE: f32 = 10.0;
-    commands.spawn_bundle(DirectionalLightBundle {
+    commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             illuminance: 30000.0,
             // Configure the projection to better fit the scene

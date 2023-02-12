@@ -16,7 +16,7 @@ pub fn add_meshes_to_atoms<T: AtomicTransition>(
     let color = get_color::<T>() * color_factor.factor;
     for (entity, pos) in query.iter() {
         let p = pos.pos * scale.0;
-        commands.entity(entity).insert_bundle(PbrBundle {
+        commands.entity(entity).insert(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Icosphere { radius: 0.05, subdivisions: 0 })),
             material: materials.add(color.into()),
             transform: Transform::from_xyz(p[0] as f32, p[1] as f32, p[2] as f32),
@@ -25,6 +25,7 @@ pub fn add_meshes_to_atoms<T: AtomicTransition>(
     }
 }
 
+#[derive(Resource)]
 pub struct MaterialColorConfig {
     pub factor: f32
 }
@@ -47,6 +48,7 @@ pub fn get_color<T : AtomicTransition>() -> Color {
     return color;
 }
 
+#[derive(Resource)]
 pub struct EmissiveColorConfig {
     pub factor: f32
 }

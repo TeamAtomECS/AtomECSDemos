@@ -5,40 +5,36 @@ use atomecs::atom::{Position, Velocity};
 use atomecs::bevy_bridge::Scale;
 use atomecs::initiate::NewlyCreated;
 use atomecs::integrator::Timestep;
-use atomecs::laser::LaserPlugin;
 use atomecs::laser::gaussian::GaussianBeam;
-use atomecs::laser_cooling::force::{EmissionForceOption, EmissionForceConfiguration};
+use atomecs::laser::LaserPlugin;
+use atomecs::laser_cooling::force::{EmissionForceConfiguration, EmissionForceOption};
 use atomecs::laser_cooling::photons_scattered::ScatteringFluctuationsOption;
 use atomecs::laser_cooling::{CoolingLight, LaserCoolingPlugin};
 use atomecs::magnetic::grid::PrecalculatedMagneticFieldGrid;
 use atomecs::shapes::Cuboid;
-use atomecs::sim_region::{SimulationVolume, VolumeType, SimulationRegionPlugin};
-use atomecs::species::{Strontium88_461};
+use atomecs::sim_region::{SimulationRegionPlugin, SimulationVolume, VolumeType};
+use atomecs::species::Strontium88_461;
 use atomecs_demos::atoms::{add_meshes_to_atoms, EmissiveColorConfig, MaterialColorConfig};
 use atomecs_demos::camera::{control_camera, DemoCamera};
 use atomecs_demos::lasers::add_meshes_to_lasers;
-use atomecs_demos::{add_atomecs_watermark, BevyAtomECSPlugin};
-use bevy::window::PresentMode;
-use bevy::winit::WinitSettings;
-use bevy_egui::{EguiPlugin, EguiContext, egui};
-use nalgebra::{Vector3};
+use atomecs_demos::BevyAtomECSPlugin;
 use bevy::prelude::*;
-use rand_distr::{Normal, Distribution};
+use bevy_egui::{egui, EguiContext, EguiPlugin};
+use nalgebra::Vector3;
+use rand_distr::{Distribution, Normal};
 extern crate serde;
 
-
-const BEAM_NUMBER : usize = 22;
+const BEAM_NUMBER: usize = 22;
 
 fn main() {
-
     let mut app = App::new();
     app.add_plugins(DefaultPlugins);
     app.add_plugin(EguiPlugin);
     app.add_plugin(atomecs::integrator::IntegrationPlugin);
     app.add_plugin(atomecs::initiate::InitiatePlugin);
     app.add_plugin(atomecs::magnetic::MagneticsPlugin);
-    app.add_plugin(LaserPlugin::<{BEAM_NUMBER}>);
-    app.add_plugin(LaserCoolingPlugin::<Strontium88_461, {BEAM_NUMBER}>::default());
+    app.add_plugin(LaserPlugin::<{ BEAM_NUMBER }>);
+    app.add_plugin(LaserCoolingPlugin::<Strontium88_461, { BEAM_NUMBER }>::default());
     app.add_plugin(SimulationRegionPlugin);
     app.add_plugin(BevyAtomECSPlugin);
     app.add_system(atomecs::output::console_output::console_output);
@@ -64,28 +60,21 @@ fn main() {
     app.add_system(experiment_controls);
     app.add_system(update_transverse_cooling);
     app.add_system(update_zeeman_slower);
-    // app.insert_resource(WinitSettings::desktop_app())
-    // .insert_resource(WindowDescriptor {
-    //     present_mode: PresentMode::Mailbox,
-    //     ..Default::default()
-    // });
     app.run();
 }
 
-pub fn setup_world(mut commands: Commands, asset_server: Res<AssetServer>) {
-
+pub fn setup_world(mut commands: Commands) {
     // Create magnetic field.
     let grid: PrecalculatedMagneticFieldGrid = serde_json::from_str(SLOWER_FIELD)
-            .expect("Could not load magnetic field grid from json file.");
-    commands.spawn().insert(grid);
-
+        .expect("Could not load magnetic field grid from json file.");
+    commands.spawn(grid);
 
     // Zeeman slowing beam along x
     let zeeman_slower_e2_diameter = 25e-3;
     let zeeman_slower_power = 0.07;
     let zeeman_slower_detuning = -450.0;
-    commands.spawn()
-        .insert(GaussianBeam {
+    commands
+        .spawn(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: zeeman_slower_e2_diameter / 2.0 / 2.0_f64.sqrt(),
             power: zeeman_slower_power,
@@ -97,81 +86,79 @@ pub fn setup_world(mut commands: Commands, asset_server: Res<AssetServer>) {
             zeeman_slower_detuning,
             -1,
         ))
-        .insert(ZeemanSlowingBeam)
-        ;
+        .insert(ZeemanSlowingBeam);
 
     // Transverse cooling region.
     let tc_detuning = -18.0;
     let tc_power = 0.013;
-    let tc_diameter = 23.0e-3;//33.0e-3 / (2.0 * 2.0_f64.sqrt()); // 33mm 1/e^2 diameter
+    let tc_diameter = 23.0e-3; //33.0e-3 / (2.0 * 2.0_f64.sqrt()); // 33mm 1/e^2 diameter
     let tc_pos = -1.7;
     let tc_stride = 0.03;
     for i in 0..2 {
-    commands.spawn()
-        .insert(GaussianBeam {
-            intersection: Vector3::new(tc_pos + i as f64 * tc_stride, 0.0, 0.0),
-            e_radius: tc_diameter / 2.0 / 2.0_f64.sqrt(),
-            power: tc_power,
-            direction: Vector3::new(0.0, 0.0, 1.0).normalize(),
-            rayleigh_range: f64::INFINITY,
-            ellipticity: 0.0,
-        })
-        .insert(CoolingLight::for_transition::<Strontium88_461>(
-            tc_detuning,
-            1,
-        ))
-        .insert(TransverseCoolingBeam);
-    commands.spawn()
-        .insert(GaussianBeam {
-            intersection: Vector3::new(tc_pos + i as f64 * tc_stride, 0.0, 0.0),
-            e_radius: tc_diameter / 2.0 / 2.0_f64.sqrt(),
-            power: tc_power,
-            direction: Vector3::new(0.0, 0.0, -1.0).normalize(),
-            rayleigh_range: f64::INFINITY,
-            ellipticity: 0.0,
-        })
-        .insert(CoolingLight::for_transition::<Strontium88_461>(
-            tc_detuning,
-            1,
-        ))
-        .insert(TransverseCoolingBeam);
-    commands.spawn()
-        .insert(GaussianBeam {
-            intersection: Vector3::new(tc_pos + i as f64 * tc_stride, 0.0, 0.0),
-            e_radius: tc_diameter / 2.0 / 2.0_f64.sqrt(),
-            power: tc_power,
-            direction: Vector3::new(0.0, 1.0, 0.0).normalize(),
-            rayleigh_range: f64::INFINITY,
-            ellipticity: 0.0,
-        })
-        .insert(CoolingLight::for_transition::<Strontium88_461>(
-            tc_detuning,
-            1,
-        ))
-        .insert(TransverseCoolingBeam);
-    commands.spawn()
-        .insert(GaussianBeam {
-            intersection: Vector3::new(tc_pos + i as f64 * tc_stride, 0.0, 0.0),
-            e_radius: tc_diameter / 2.0 / 2.0_f64.sqrt(),
-            power: tc_power,
-            direction: Vector3::new(0.0, -1.0, 0.0).normalize(),
-            rayleigh_range: f64::INFINITY,
-            ellipticity: 0.0,
-        })
-        .insert(CoolingLight::for_transition::<Strontium88_461>(
-            tc_detuning,
-            1,
-        ))
-        .insert(TransverseCoolingBeam);
+        commands
+            .spawn(GaussianBeam {
+                intersection: Vector3::new(tc_pos + i as f64 * tc_stride, 0.0, 0.0),
+                e_radius: tc_diameter / 2.0 / 2.0_f64.sqrt(),
+                power: tc_power,
+                direction: Vector3::new(0.0, 0.0, 1.0).normalize(),
+                rayleigh_range: f64::INFINITY,
+                ellipticity: 0.0,
+            })
+            .insert(CoolingLight::for_transition::<Strontium88_461>(
+                tc_detuning,
+                1,
+            ))
+            .insert(TransverseCoolingBeam);
+        commands
+            .spawn(GaussianBeam {
+                intersection: Vector3::new(tc_pos + i as f64 * tc_stride, 0.0, 0.0),
+                e_radius: tc_diameter / 2.0 / 2.0_f64.sqrt(),
+                power: tc_power,
+                direction: Vector3::new(0.0, 0.0, -1.0).normalize(),
+                rayleigh_range: f64::INFINITY,
+                ellipticity: 0.0,
+            })
+            .insert(CoolingLight::for_transition::<Strontium88_461>(
+                tc_detuning,
+                1,
+            ))
+            .insert(TransverseCoolingBeam);
+        commands
+            .spawn(GaussianBeam {
+                intersection: Vector3::new(tc_pos + i as f64 * tc_stride, 0.0, 0.0),
+                e_radius: tc_diameter / 2.0 / 2.0_f64.sqrt(),
+                power: tc_power,
+                direction: Vector3::new(0.0, 1.0, 0.0).normalize(),
+                rayleigh_range: f64::INFINITY,
+                ellipticity: 0.0,
+            })
+            .insert(CoolingLight::for_transition::<Strontium88_461>(
+                tc_detuning,
+                1,
+            ))
+            .insert(TransverseCoolingBeam);
+        commands
+            .spawn(GaussianBeam {
+                intersection: Vector3::new(tc_pos + i as f64 * tc_stride, 0.0, 0.0),
+                e_radius: tc_diameter / 2.0 / 2.0_f64.sqrt(),
+                power: tc_power,
+                direction: Vector3::new(0.0, -1.0, 0.0).normalize(),
+                rayleigh_range: f64::INFINITY,
+                ellipticity: 0.0,
+            })
+            .insert(CoolingLight::for_transition::<Strontium88_461>(
+                tc_detuning,
+                1,
+            ))
+            .insert(TransverseCoolingBeam);
     }
-
 
     // MOT region
     let blue_mot_detuning = -25.0;
     let blue_mot_power = 0.0105;
-    let blue_mot_e2_diameter = 22.0e-3;//33.0e-3 / (2.0 * 2.0_f64.sqrt()); // 33mm 1/e^2 diameter
-    commands.spawn()
-        .insert(GaussianBeam {
+    let blue_mot_e2_diameter = 22.0e-3; //33.0e-3 / (2.0 * 2.0_f64.sqrt()); // 33mm 1/e^2 diameter
+    commands
+        .spawn(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: blue_mot_e2_diameter / 2.0 / 2.0_f64.sqrt(),
             power: blue_mot_power,
@@ -183,8 +170,8 @@ pub fn setup_world(mut commands: Commands, asset_server: Res<AssetServer>) {
             blue_mot_detuning,
             1,
         ));
-    commands.spawn()
-        .insert(GaussianBeam {
+    commands
+        .spawn(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: blue_mot_e2_diameter / 2.0 / 2.0_f64.sqrt(),
             power: blue_mot_power,
@@ -196,8 +183,8 @@ pub fn setup_world(mut commands: Commands, asset_server: Res<AssetServer>) {
             blue_mot_detuning,
             1,
         ));
-    commands.spawn()
-        .insert(GaussianBeam {
+    commands
+        .spawn(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: blue_mot_e2_diameter / 2.0 / 2.0_f64.sqrt(),
             power: blue_mot_power,
@@ -209,8 +196,8 @@ pub fn setup_world(mut commands: Commands, asset_server: Res<AssetServer>) {
             blue_mot_detuning,
             -1,
         ));
-    commands.spawn()
-        .insert(GaussianBeam {
+    commands
+        .spawn(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: blue_mot_e2_diameter / 2.0 / 2.0_f64.sqrt(),
             power: blue_mot_power,
@@ -225,8 +212,8 @@ pub fn setup_world(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Define simulation bounds
     //  1. Zeeman slower pipe
-    commands.spawn()
-        .insert(Position {
+    commands
+        .spawn(Position {
             pos: Vector3::new(-1.0, 0.0, 0.0),
         })
         .insert(Cuboid {
@@ -242,12 +229,14 @@ fn create_atoms(mut commands: Commands) {
     let mut rng = rand::thread_rng();
 
     let oven_position = -1.9; //m
-    // Add atoms
+                              // Add atoms
     for _ in 0..3 {
-        commands.spawn()
-            .insert(Position {
+        commands
+            .spawn(Position {
                 pos: Vector3::new(
-                    oven_position, 0.001*dist.sample(&mut rng), 0.001*dist.sample(&mut rng)
+                    oven_position,
+                    0.001 * dist.sample(&mut rng),
+                    0.001 * dist.sample(&mut rng),
                 ),
             })
             .insert(Velocity {
@@ -261,21 +250,21 @@ fn create_atoms(mut commands: Commands) {
             .insert(Mass { value: 88.0 })
             .insert(Strontium88_461)
             .insert(Atom)
-            .insert(NewlyCreated)
-            ;
-        }
+            .insert(NewlyCreated);
     }
+}
 
-
-fn setup_camera(
-    mut commands: Commands,
-    scale: Res<Scale>,
-) {
+fn setup_camera(mut commands: Commands, scale: Res<Scale>) {
     // set up the camera
-    let look_at_target = Vec3::new(-1.0,0.0,0.0);
+    let look_at_target = Vec3::new(-1.0, 0.0, 0.0);
     let demo_cam = DemoCamera::new(8.0, look_at_target);
     let camera = Camera3dBundle {
-        projection: OrthographicProjection { scale: 0.05, near: -30.0, ..default() }.into(),
+        projection: OrthographicProjection {
+            scale: 0.05,
+            near: -30.0,
+            ..default()
+        }
+        .into(),
         transform: demo_cam.get_transform(scale.0 as f32),
         ..default()
     };
@@ -283,10 +272,10 @@ fn setup_camera(
     //camera.orthographic_projection.near = -30.0;
 
     // camera
-    commands.spawn_bundle(camera).insert(demo_cam);
+    commands.spawn(camera).insert(demo_cam);
 
     const HALF_SIZE: f32 = 100.0;
-    commands.spawn_bundle(DirectionalLightBundle {
+    commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             illuminance: 30000.0,
             // Configure the projection to better fit the scene
@@ -307,33 +296,30 @@ fn setup_camera(
         //     rotation: Quat::from_rotation_y(4.2) * Quat::from_rotation_x(-1.2),
         //     ..default()
         // },
-        transform : Transform::from_xyz(0.0,1.0,1.0).looking_at(Vec3::default(), Vec3::Y),
+        transform: Transform::from_xyz(0.0, 1.0, 1.0).looking_at(Vec3::default(), Vec3::Y),
         ..default()
     });
 
-    commands.insert_resource(AmbientLight { brightness: 0.3, ..default() });
+    commands.insert_resource(AmbientLight {
+        brightness: 0.3,
+        ..default()
+    });
 }
 
 // Component that will be used to tag entities in the scene
 #[derive(Component)]
 struct EntityInMyScene;
 
-fn spawn_cad(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>
-) {
-    commands
-        .spawn_bundle(
-            SceneBundle { 
-                scene: asset_server.load("models/schreck.gltf#Scene0"),
-                transform: Transform {
-                    scale: Vec3::new(0.2735,0.2735,0.2735),
-                    //rotation: Quat::from_rotation_y(0.0),
-                    ..default()
-                },
-                ..default() 
-            }
-        );
+fn spawn_cad(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(SceneBundle {
+        scene: asset_server.load("models/schreck.gltf#Scene0"),
+        transform: Transform {
+            scale: Vec3::new(0.2735, 0.2735, 0.2735),
+            //rotation: Quat::from_rotation_y(0.0),
+            ..default()
+        },
+        ..default()
+    });
 }
 
 //yeah its messy, but so is loading raw json via bevy asset lib right now.
@@ -347,15 +333,16 @@ pub struct ZeemanSlowingBeam;
 #[derive(Component, Default)]
 pub struct TransverseCoolingBeam;
 
+#[derive(Resource)]
 pub struct ExperimentConfiguration {
     pub zeeman_slower_detuning: f64,
-    pub transverse_cooling_detuning: f64
+    pub transverse_cooling_detuning: f64,
 }
 impl Default for ExperimentConfiguration {
     fn default() -> Self {
         ExperimentConfiguration {
             zeeman_slower_detuning: -450.0,
-            transverse_cooling_detuning: -18.0
+            transverse_cooling_detuning: -18.0,
         }
     }
 }
@@ -372,29 +359,39 @@ fn experiment_controls(
                 "powered by AtomECS",
                 "https://github.com/TeamAtomECS/AtomECS/",
             ));
-            
-            ui.add(egui::Slider::new(&mut config.zeeman_slower_detuning, -500.0..=-30.0).text("Zeeman slower detuning (MHz)"));
-            ui.add(egui::Slider::new(&mut config.transverse_cooling_detuning, -200.0..=-10.0).text("Transverse cooling detuning (MHz)"));
+
+            ui.add(
+                egui::Slider::new(&mut config.zeeman_slower_detuning, -500.0..=-30.0)
+                    .text("Zeeman slower detuning (MHz)"),
+            );
+            ui.add(
+                egui::Slider::new(&mut config.transverse_cooling_detuning, -200.0..=-10.0)
+                    .text("Transverse cooling detuning (MHz)"),
+            );
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         });
 }
 
 fn update_zeeman_slower(
     mut zeeman_query: Query<&mut CoolingLight, With<ZeemanSlowingBeam>>,
-    config: Res<ExperimentConfiguration>
+    config: Res<ExperimentConfiguration>,
 ) {
     for mut light in zeeman_query.iter_mut() {
-        let wavelength = CoolingLight::for_transition::<Strontium88_461>(config.zeeman_slower_detuning, 1).wavelength;
+        let wavelength =
+            CoolingLight::for_transition::<Strontium88_461>(config.zeeman_slower_detuning, 1)
+                .wavelength;
         light.wavelength = wavelength;
     }
 }
 
 fn update_transverse_cooling(
     mut tc_query: Query<&mut CoolingLight, With<TransverseCoolingBeam>>,
-    config: Res<ExperimentConfiguration>
+    config: Res<ExperimentConfiguration>,
 ) {
     for mut light in tc_query.iter_mut() {
-        let wavelength = CoolingLight::for_transition::<Strontium88_461>(config.transverse_cooling_detuning, 1).wavelength;
+        let wavelength =
+            CoolingLight::for_transition::<Strontium88_461>(config.transverse_cooling_detuning, 1)
+                .wavelength;
         light.wavelength = wavelength;
     }
 }

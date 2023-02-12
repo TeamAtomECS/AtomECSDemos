@@ -17,7 +17,7 @@ pub fn add_atomecs_watermark(
     asset_server: Res<AssetServer>
 ) {
         commands
-        .spawn_bundle(
+        .spawn(
             // Create a TextBundle that has a Text with a list of sections.
             TextBundle::from_sections([
                 TextSection::new(
